@@ -1,0 +1,7 @@
+{
+  "apiVersion": "1.0.0",
+  "swaggerVersion": "1.2",
+  "apis": [
+    { "path": "/inlineStyle", "description": "operation about inline style" }
+  ]
+}

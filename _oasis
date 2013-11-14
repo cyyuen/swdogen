@@ -1,0 +1,17 @@
+OASISFormat: 0.3
+Name:        swdogen
+Version:     0.0.1
+Synopsis:    SWagger DOcumentation GENerator
+Description: Scan and parse your source code and generate valid swagger document feed to swagger-ui
+Authors:     C.Y. yuen
+Maintainers: colsy2@gmail.com
+Homepage:    https://github.com/dotcy/swdogen/wiki
+License:     MIT
+
+Executable swdogen
+  Path:           src
+  BuildTools:     ocamlbuild
+  BuildDepends:   atdgen, unix
+  MainIs:         swdogen.ml
+  CompiledObject: best
+  

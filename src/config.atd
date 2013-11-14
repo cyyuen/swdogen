@@ -1,0 +1,10 @@
+type t = {
+  (* version *)
+  apiVersion : string;
+  (* output *)
+  outputDir : string;
+  compact : bool;
+  (* project *)
+  discoverPaths : string list;
+  excludedPaths : string list;
+}

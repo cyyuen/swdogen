@@ -1,0 +1,9 @@
+{
+  "apiVersion": "1.0.0",
+  "outputDir" : "apis",
+  "discoverPaths" : [
+    "."
+  ],
+  "excludedPaths":[],
+  "compact" : false
+}
