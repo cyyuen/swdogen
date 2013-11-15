@@ -8,6 +8,7 @@
       "path": "/foo/foofoo",
       "operations": [
         {
+          "nickname": "foofoo",
           "parameters": [
             {
               "paramType": "body",

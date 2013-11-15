@@ -229,14 +229,15 @@ let genAPIProp (propList, modelSet, paramList, responsesList) = function
       (propList, modelSet, param :: paramList, responsesList)
 ;;
 
-let genOperation (OperationDef (_, nickname, props)) =
+let genOperation (OperationDef (_, Identifier(_, name), props)) =
   let (propList, models, params, responses) = 
     List.fold_left genAPIProp ([], StringSet.empty, [], []) props
   in 
   let params = karr "parameters" (commaJoin params)
   and responses = karr "responseMessages" (commaJoin responses)
+  and nickname = kstr "nickname" name
   and propDefList = commaJoin propList in
-    (genObject (commaJoin [params; responses; propDefList])), models
+    (genObject (commaJoin [nickname; params; responses; propDefList])), models
 ;;
 
 (* val genApi : Ast.apiDef -> (string * StringSet.t) *)

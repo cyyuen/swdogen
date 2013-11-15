@@ -8,6 +8,7 @@
       "path": "/pet/{petId}",
       "operations": [
         {
+          "nickname": "getPetById",
           "parameters": [
             {
               "paramType": "path",
@@ -34,6 +35,7 @@
       "path": "/pet/findByStatus",
       "operations": [
         {
+          "nickname": "findPetsByStatus",
           "parameters": [
             {
               "paramType": "query",
@@ -61,6 +63,7 @@
       "path": "/pet/findByTags",
       "operations": [
         {
+          "nickname": "findPetsByTags",
           "parameters": [
             {
               "paramType": "query",
