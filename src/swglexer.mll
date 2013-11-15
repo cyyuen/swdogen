@@ -26,9 +26,9 @@ rule token = parse
 
 and swg_entry = parse
   | "@resource"    { T_AT_RESOURCE     }
-  | "@apiName"     { T_AT_APINAME      }
+  | "@operation"   { T_AT_OPERATION    }
   | "@desc"        { T_AT_DESC         }
-  | "@url"         { T_AT_URL          }
+  | "@api"         { T_AT_API          }
   | "@method"      { T_AT_METHOD       }
   | "@summary"     { T_AT_SUMMARY      }
   | "@return"      { T_AT_RETURN       }

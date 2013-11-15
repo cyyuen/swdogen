@@ -35,8 +35,8 @@ let makeTokenData () =
 /* TODO: namespace
 %token T_AT_NAMESPACE
 */
-%token T_AT_RESOURCE T_AT_DESC T_AT_APINAME T_AT_BASEPATH
-%token T_AT_URL T_AT_SUMMARY T_AT_RETURN T_AT_RESPONSE T_AT_NOTES T_AT_METHOD
+%token T_AT_RESOURCE T_AT_DESC T_AT_OPERATION T_AT_BASEPATH
+%token T_AT_API T_AT_SUMMARY T_AT_RETURN T_AT_RESPONSE T_AT_NOTES T_AT_METHOD
 %token T_AT_PARAM
 %token T_AT_MODEL T_AT_PROPERTY
 
@@ -158,14 +158,14 @@ operation_property_list:
   | operation_property operation_property_list                   { $1::$2 }
 ;
 operation_def:
-  T_AT_APINAME identifier operation_property_list                { (OperationDef (makeTokenData(), $2, $3)) }
+  T_AT_OPERATION identifier operation_property_list              { (OperationDef (makeTokenData(), $2, $3)) }
 ;
 operation_def_list:
   /* empty */                                                    { [] }
   | operation_def operation_def_list                             { $1::$2 }
 ;
 api_def:
-  T_AT_URL url operation_def_list                                { (APIDef (makeTokenData(), $2, $3)) }
+  T_AT_API url operation_def_list                                { (APIDef (makeTokenData(), $2, $3)) }
 ; 
 api_def_list:
   /* empty */                                                    { [] }

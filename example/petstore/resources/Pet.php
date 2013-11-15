@@ -12,8 +12,8 @@ namespace Petstore\Resources;
 class Pet
 {
     /**
-     * @url /pet/{petId}
-     * @apiName getPetById
+     * @api /pet/{petId}
+     * @operation getPetById
      * @method GET
      * @summary "Find pet by ID"
      * @notes "Returns a pet based on ID"
@@ -27,8 +27,8 @@ class Pet
     }
 
     /**
-     * @url /pet/findByStatus
-     * @apiName findPetsByStatus
+     * @api /pet/findByStatus
+     * @operation findPetsByStatus
      * @method GET
      * @summary "Finds Pets by status"
      * @notes "Multiple status values can be provided with comma seperated strings"
@@ -41,8 +41,8 @@ class Pet
     }
 
     /**
-     * @url /pet/findByTags
-     * @apiName findPetsByTags
+     * @api /pet/findByTags
+     * @operation findPetsByTags
      * @method GET
      * @summary "Finds Pets by tags"
      * @notes "Muliple tags can be provided with comma seperated strings. Use tag1, tag2, tag3 for testing."

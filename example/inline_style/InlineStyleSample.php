@@ -4,8 +4,8 @@ class InlineStyleSample {
     /**
      * @resource /inlineStyle "operation about inline style"
      * @basePath http://www.foo.com
-     * @url /foo/foofoo
-     * @apiName foofoo
+     * @api /foo/foofoo
+     * @operation foofoo
      * @summary "this is a foo API"
      * @method POST
      * @notes "notes"
