@@ -18,7 +18,13 @@
               "$ref": "Bar"
             }
           ],
-          "responseMessages": [],
+          "responseMessages": [
+            {
+              "responseModel": "BarBar(bar=Bar)",
+              "code": 400,
+              "message": "bar"
+            }
+          ],
           "type": "BarBar(bar=Bar)",
           "notes": "notes",
           "method": "POST",

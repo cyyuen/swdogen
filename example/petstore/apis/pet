@@ -22,7 +22,11 @@
             }
           ],
           "responseMessages": [
-            { "code": 404, "message": "Pet not found" },
+            {
+              "responseModel": "Tag",
+              "code": 404,
+              "message": "Pet not found"
+            },
             { "code": 400, "message": "Invalid ID supplied" }
           ],
           "type": "Pet",
@@ -90,6 +94,21 @@
     }
   ],
   "models": {
+    "Tag": {
+      "id": "Tag",
+      "required": [ "id", "name" ],
+      "properties": {
+        "id": {
+          "description": "Unique identifier for the tag",
+          "type": "integer",
+          "format": "int64"
+        },
+        "name": {
+          "description": "Friendly name for the tag",
+          "type": "string"
+        }
+      }
+    },
     "Pet": {
       "id": "Pet",
       "required": [ "id", "name" ],
@@ -125,21 +144,6 @@
           "description": "pet status in the store",
           "type": "string",
           "enum": [ "available", "pending", "sold" ]
-        }
-      }
-    },
-    "Tag": {
-      "id": "Tag",
-      "required": [ "id", "name" ],
-      "properties": {
-        "id": {
-          "description": "Unique identifier for the tag",
-          "type": "integer",
-          "format": "int64"
-        },
-        "name": {
-          "description": "Friendly name for the tag",
-          "type": "string"
         }
       }
     },

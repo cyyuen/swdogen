@@ -11,6 +11,7 @@ class InlineStyleSample {
      * @notes "notes"
      * @param Bar:Bar #body "this is a bar"
      * @return BarBar(bar=Bar)
+     * @response 400 BarBar(bar=Bar) "bar"
      *
      * @model Bar
      *
