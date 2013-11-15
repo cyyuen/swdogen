@@ -203,8 +203,9 @@ let genParam (_, varDef, paramTyp, desc) =
   and desc = genDesc desc
   and VarDef (_, Identifier(_, name), typ, required) = varDef in
   let requiredStr = genRequired required
+  and paramName = kstr "name" name
   and (typStr, model) = genTyp typ in
-    (genObject (commaJoin [paramTypStr; desc; requiredStr; typStr]), model)
+    (genObject (commaJoin [paramName; paramTypStr; desc; requiredStr; typStr]), model)
 ;;
 
 let genAPIProp (propList, modelSet, paramList, responsesList) = function

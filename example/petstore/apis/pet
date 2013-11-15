@@ -11,6 +11,7 @@
           "nickname": "getPetById",
           "parameters": [
             {
+              "name": "petId",
               "paramType": "path",
               "description": "ID of pet that needs to be fetched",
               "required": true,
@@ -38,6 +39,7 @@
           "nickname": "findPetsByStatus",
           "parameters": [
             {
+              "name": "status",
               "paramType": "query",
               "description":
                 "Status values that need to be considered for filter",
@@ -66,6 +68,7 @@
           "nickname": "findPetsByTags",
           "parameters": [
             {
+              "name": "tags",
               "paramType": "query",
               "description": "Tags to filter by",
               "required": true,

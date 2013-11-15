@@ -11,6 +11,7 @@
           "nickname": "foofoo",
           "parameters": [
             {
+              "name": "Bar",
               "paramType": "body",
               "description": "this is a bar",
               "required": true,
