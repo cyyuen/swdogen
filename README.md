@@ -6,6 +6,17 @@ This is a documentation generator for [swagger-ui](https://github.com/wordnik/sw
 
 The [github wiki](https://github.com/dotcy/swdogen/wiki) contains documentation, samples, etc.  Start there
 
+## Supported Language
+
+Any languages that supports c-style bloack comment, ie. 
+
+```C
+/* 
+	comments
+	...
+*/
+```
+
 ## Installation
 
 Under the top-level of swdogen, run
