@@ -8,6 +8,8 @@ val err_sprintf : string (* file name *)
 				  -> string (* error description *)
 				  -> string
 
-val report : err_list -> string -> err_list
+val add : err_list -> string -> err_list
+
+val is_empty : err_list -> bool
 
 val print_all : err_list -> unit
