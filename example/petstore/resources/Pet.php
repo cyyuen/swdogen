@@ -4,10 +4,15 @@ namespace Petstore\Resources;
 /**
  * @resource /pet "Operations about pets"
  * @basePath http://petstore.swagger.wordnik.com/api
+ *
+ * @consumes application/json
  * @produces application/json
+ *
+ * @consumes application/xml
  * @produces application/xml
  * @produces text/plain
  * @produces text/html
+ * 
  */
 class Pet
 {

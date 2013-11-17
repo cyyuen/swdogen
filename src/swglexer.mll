@@ -11,9 +11,27 @@ let identifier = (alpha|'_')((alpha|digit|'_')* )
 (* ordinary string character (without: single/double quotes, backslash) *)
 let url_char = alpha|digit|['-' '!' '@' '#' '$' '%' '^' '&' '*' '(' ')' '_' '=' '+' '[' ']' '{' '}' '|' ';' ':' '<' '>' ',' '.' '/' '?' '~' '`']
 let string_char = url_char|' '
-let urlscheme = ("http://" | "https://" | "ftp://" | '/')
+
+let urlscheme = 
+  ( "http://" 
+  | "https://" 
+  | "ftp://" 
+  | '/')
+
 let url = urlscheme url_char+
 let blanks = [' ' '\t']+
+
+let minescheme = 
+  ( "application/" 
+  | "audio/" 
+  | "image/" 
+  | "message" 
+  | "model/" 
+  | "multiplepart/" 
+  | "text/" 
+  | "video/")
+
+let mine = minescheme url_char+
 
 
 (* the swg token is defined within the comments *)
@@ -37,7 +55,9 @@ and swg_entry = parse
   | "@param"       { T_AT_PARAM        }
   | "@model"       { T_AT_MODEL        }
   | "@property"    { T_AT_PROPERTY     }
-  | "@basePath"    { T_AT_BASEPATH     } 
+  | "@basePath"    { T_AT_BASEPATH     }
+  | "@produces"    { T_AT_PRODUCES     } 
+  | "@consumes"    { T_AT_CONSUMES     } 
   | "*/"           { token lexbuf;     }
   | "\n"           { new_line lexbuf; 
                      swg_entry lexbuf  }
@@ -102,6 +122,8 @@ and swg_body = parse
            { T_STRING_LITERAL(lxm) }
   | url as lxm     
            { T_URL (lxm) }
+  | mine as lxm
+           { T_MIME (lxm) }
   | _      { swg_body lexbuf }
 
 {

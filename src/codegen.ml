@@ -138,7 +138,21 @@ let genSWGVersion ver = kstr "swaggerVersion" ver
 
 let genAPIVersion ver = kstr "apiVersion" ver
 
-let genBasePath (BasePath (_, URL(_, path))) = kstr "basePath" path
+let genBasePath (_, URL(_, path)) = kstr "basePath" path
+
+let genMIMEList mimeList =
+  let (produces, consumes) =
+    List.fold_left (fun (pl, cl) mime ->
+                      match mime with
+                          | (Produces(_, MIME(_, p))) -> 
+                              ((genStr p) :: pl, cl)
+                          | (Consumes(_, MIME(_, c))) -> 
+                              (pl, (genStr c) :: cl)) 
+                   ([], []) mimeList
+  in
+  let producesList = karr "produces" (commaJoin produces)
+  and consumesList = karr "consumes" (commaJoin consumes) in
+    commaJoin [producesList; consumesList]
 
 let genResourcePath (URL(_, path)) = kstr "resourcePath" path
 
@@ -146,7 +160,7 @@ let genPath (URL(_, path)) = kstr "path" path
 
 let genParameters (param) = kstr "parameters" param
   
-let genResponses (rep) = karr "responses:" rep
+let genResponses (rep) = karr "responses" rep
 
 let genHttpMethod (_, httpMethod) =
   let m = match httpMethod with
@@ -170,7 +184,9 @@ let genResponseMsg (_, (StatusCode(_, status)), model, (Desc(_, desc))) =
   let (msg, model) = (match model with
                           | None -> (msg, None)
                           | Some m -> 
-                            let m = swgtype_toString (ModelType (ModelRef (m))) in
+                            let m = swgtype_toString
+                              (ModelType (ModelRef (m))) 
+                            in
                               (kstr "responseModel" m) :: msg,
                               Some m)
   in
@@ -205,7 +221,8 @@ let genParam (_, varDef, paramTyp, desc) =
   let requiredStr = genRequired required
   and paramName = kstr "name" name
   and (typStr, model) = genTyp typ in
-    (genObject (commaJoin [paramName; paramTypStr; desc; requiredStr; typStr]), model)
+    (genObject 
+      (commaJoin [paramName; paramTypStr; desc; requiredStr; typStr]), model)
 ;;
 
 let genAPIProp (propList, modelSet, paramList, responsesList) = function
@@ -228,6 +245,8 @@ let genAPIProp (propList, modelSet, paramList, responsesList) = function
     let (param, model) = genParam p in
     let modelSet = addToModelSet modelSet model in
       (propList, modelSet, param :: paramList, responsesList)
+  | LocalMIME (m) ->
+      (propList, modelSet, paramList, responsesList)
 ;;
 
 let genOperation (OperationDef (_, Identifier(_, name), props)) =
@@ -243,7 +262,9 @@ let genOperation (OperationDef (_, Identifier(_, name), props)) =
 
 (* val genApi : Ast.apiDef -> (string * StringSet.t) *)
 let genApi (APIDef (_, (URL(_, url)), operations)) = 
-  let (opertionList, modelSetList) = List.split (List.map genOperation operations) in
+  let (opertionList, modelSetList) = 
+    List.split (List.map genOperation operations) 
+  in
   let modelSet = List.fold_left StringSet.union StringSet.empty modelSetList
   and operations = karr "operations" (commaJoin opertionList)
   and path = kstr "path" url in
@@ -334,17 +355,21 @@ let rec genModels env ?allmodels:(allModels = StringSet.empty) modelSet =
 ;;
 
 let genResource env apiVersion swgVersion
-                path (ResourceDef (_, rpath, desc, basePath, apiDefs)) 
+                path (ResourceDef (_, rpath, desc, resourceProps, apiDefs)) 
                 (resourceDescList, resourceList) =
   let (apiList, modelSetList) = List.split (List.map genApi apiDefs) in
   let modelSet = List.fold_left StringSet.union StringSet.empty modelSetList in
   let modelList = genModels env modelSet in
+  let ResourceProps (BasePath(basePath), mimeList) = resourceProps in
   let apis = karr "apis" (commaJoin apiList)
   and models = kobj "models" (commaJoin modelList)
-  and basePath = genBasePath basePath 
+  and basePath = genBasePath basePath
+  and mimeList = genMIMEList mimeList
   and resourcePath = genResourcePath rpath in
-  let resource = genObject (commaJoin [apiVersion; swgVersion; basePath; 
-                                       resourcePath; apis; models])
+  let resource = 
+    genObject (commaJoin 
+                [apiVersion; swgVersion; resourcePath;
+                 basePath; mimeList; apis; models])
   in
   let path_j = genPath rpath
   and desc_j = genDesc desc in
@@ -356,7 +381,11 @@ let gen config env =
   let apiVersion = genAPIVersion (Config.apiVersion config)
   and swgVersion = genSWGVersion (Config.swaggerVersion config) in
   let genResource = genResource env apiVersion swgVersion in
-  let (resourceDescList, resourceList) = foldResource genResource env ([], []) in
+  let (resourceDescList, resourceList) = 
+    foldResource genResource env ([], []) 
+  in
   let apis = karr "apis" (commaJoin resourceDescList) in
-  let resourceDescList = genObject (commaJoin [apiVersion; swgVersion; apis]) in
+  let resourceDescList = 
+    genObject (commaJoin [apiVersion; swgVersion; apis]) 
+  in
       resourceDescList, resourceList

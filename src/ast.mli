@@ -14,6 +14,8 @@ type url = URL of (tokenData * string)
 
 type desc = Desc of (tokenData * string)
 
+type mime = MIME of (tokenData * string)
+
 type required = Required
               | Optional
 
@@ -66,20 +68,26 @@ type httpMethod = GET    of tokenData
 
 type statusCode = StatusCode of (tokenData * int)
 
-type operationProperty = Method      of (tokenData * httpMethod)
-                       | Return      of (tokenData * swgtype)
-                       | Summary     of (tokenData * desc)
-                       | Notes       of (tokenData * desc)
-                       | ResponseMsg of (tokenData * statusCode * modelRef option * desc)
-                       | ParamDef    of (tokenData * varDef * paramType * desc)
+type mimeDef = Produces of (tokenData * mime)
+             | Consumes of (tokenData * mime)
 
-type operationDef = OperationDef of (tokenData * identifier * operationProperty list)
+type operationProp = Method      of (tokenData * httpMethod)
+                   | Return      of (tokenData * swgtype)
+                   | Summary     of (tokenData * desc)
+                   | Notes       of (tokenData * desc)
+                   | ResponseMsg of (tokenData * statusCode * modelRef option * desc)
+                   | ParamDef    of (tokenData * varDef * paramType * desc)
+                   | LocalMIME   of mimeDef
+
+type operationDef = OperationDef of (tokenData * identifier * operationProp list)
 
 type apiDef = APIDef of (tokenData * url * operationDef list)
 
 type basePath = BasePath of (tokenData * url)
 
-type resourceDef = ResourceDef of (tokenData * url * desc * basePath * apiDef list) 
+type resourceProps = ResourceProps of (basePath * mimeDef list)
+
+type resourceDef = ResourceDef of (tokenData * url * desc * resourceProps * apiDef list) 
 
 type swgDoc = ResourceDefs of resourceDef list
             | ModelDefs of modelDef list

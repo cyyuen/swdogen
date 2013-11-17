@@ -39,11 +39,14 @@ let mergeAPIList apiBinding apiList =
 ;;
 
 let mergeResource env 
-                  (ResourceDef(pos, (URL(_, p) as path), desc, basepath, apiList)) 
-                  (ResourceDef(_, URL(_, p'), _, _, apiList')) =
-  let apiBinding = Hashtbl.find env.resourceAPIBinding p in
-  let apiList = mergeAPIList apiBinding apiList' in
-    ResourceDef(pos, path, desc, basepath, apiList)
+                  (ResourceDef(pos, (URL(_, p) as path), desc, rsrcProps, apiList)) 
+                  (ResourceDef(_, URL(_, p'), _, rsrcProps', apiList')) =
+  let apiBinding = Hashtbl.find env.resourceAPIBinding p
+  and ResourceProps (basePath, mimeList) = rsrcProps
+  and ResourceProps (_, mimeList') = rsrcProps' in
+  let mergedApiList = mergeAPIList apiBinding apiList'
+  and mergedRscProp = ResourceProps (basePath, mimeList @ mimeList') in
+    ResourceDef(pos, path, desc, mergedRscProp, mergedApiList)
 ;;
 
 let fetchModelDefById env modelId = Hashtbl.find env.modelDefBinding modelId
@@ -418,6 +421,10 @@ let analysisMethod (env, errList, propTbl) (pos, _) =
     (env, errList', propTbl)
 ;;
 
+let analysisMimes (env, errList, propTbl) mime =
+  (env, errList, propTbl)
+;;
+
 let analysisOperationProperty paramsTbl (env, errList, propTbl) = function
   | ParamDef (param) -> analysisParam paramsTbl (env, errList, propTbl) param
   | Return (return) -> analysisReturn (env, errList, propTbl) return 
@@ -425,6 +432,7 @@ let analysisOperationProperty paramsTbl (env, errList, propTbl) = function
   | Summary (summary) -> analysisSummary (env, errList, propTbl) summary
   | Notes (notes) -> analysisNotes (env, errList, propTbl) notes
   | Method (methd) -> analysisMethod (env, errList, propTbl) methd
+  | LocalMIME (mime) -> analysisMimes (env, errList, propTbl) mime
 ;;
 
 let analysisOperation paramsTbl (env, errList) operation =
@@ -479,7 +487,7 @@ let analysisApi path (env, errList) api =
 ;;
 
 let analysisResourceDef (env, errList) resource =
-  let (ResourceDef(pos, rpath, desc, bpath, apis)) = resource in
+  let (ResourceDef(pos, rpath, desc, rsrcProps, apis)) = resource in
   let URL(_, path) = rpath in
   let apiCombine apis = (
     let apiTbl = Hashtbl.create 10 in
@@ -496,7 +504,7 @@ let analysisResourceDef (env, errList) resource =
   ) in
   let mergedApis = apiCombine apis in
   let env = 
-    addResource env path (ResourceDef(pos, rpath, desc, bpath, mergedApis)) 
+    addResource env path (ResourceDef(pos, rpath, desc, rsrcProps, mergedApis)) 
   in
   let (env', errList') = 
     List.fold_left (analysisApi path) (env, errList) apis
