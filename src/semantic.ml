@@ -134,7 +134,7 @@ type msg = Error of (Ast.tokenData * string)
      | Warning of (Ast.tokenData * string)
 ;;
 
-let err_sprintf_and_add (TokenData(fname, lnum, cnum)) msg errList =
+let err_create_and_add (TokenData(fname, lnum, cnum)) msg errList =
   let err = Error.err_sprintf fname lnum cnum msg in
     Error.add errList err 
 ;;
@@ -147,37 +147,25 @@ let applyCheck (errList: Error.err_list)
 ;;
 
 (*********************
-  Operation Properties
+   Properties Table
 **********************)
 
-module OperationPropTbl : sig 
+module PropTbl : sig 
   type t
 
-  val init : unit -> t
+  val init : int -> int -> t
 
-  val set_method: t -> Ast.tokenData -> unit
-  val method_is_set: t -> bool
-  val method_refined_msg: Ast.tokenData -> string
+  val set_singleton_prop : string -> t -> Ast.tokenData ->unit 
 
-  val set_notes: t -> Ast.tokenData -> unit
-  val notes_is_set: t -> bool
-  val notes_refined_msg: Ast.tokenData -> string
-  
-  val set_summary: t -> Ast.tokenData -> unit
-  val summary_is_set: t -> bool
-  val summary_refined_msg: Ast.tokenData -> string
-  
-  val set_return: t -> Ast.tokenData -> unit
-  val return_is_set: t -> bool
-  val return_refined_msg: Ast.tokenData -> string
+  val set_multiple_prop : string -> string -> t ->  Ast.tokenData -> unit
 
-  val set_param: t -> string -> Ast.tokenData -> unit
-  val param_is_set: t -> bool
-  val param_refined_msg: string -> Ast.tokenData -> string
-  
-  val set_response: t -> string -> Ast.tokenData -> unit
-  val response_is_set: t -> bool
-  val response_refined_msg: string -> Ast.tokenData -> string
+  val singleton_is_set : string -> t -> bool
+
+  val multiple_is_set : string -> t  -> bool
+
+  val singleton_redefined_msg : string -> Ast.tokenData -> string
+
+  val multiple_redefined_msg : string -> string -> Ast.tokenData -> string
 
   exception Property_redifined of Ast.tokenData
 
@@ -189,19 +177,19 @@ end = struct
 
   exception Property_redifined of Ast.tokenData
 
-  let init () = {
-    singleton = Hashtbl.create 4;
-    multiple = Hashtbl.create 2;
+  let init singleton_size multiple_size = {
+    singleton = Hashtbl.create singleton_size;
+    multiple = Hashtbl.create multiple_size;
   }
 
-  let define_singleton_prop t propName tok = 
+  let set_singleton_prop propName t tok = 
     try
       let propTok = Hashtbl.find t.singleton propName in
         raise (Property_redifined (propTok))
     with
     | Not_found -> Hashtbl.add t.singleton propName tok
 
-  let define_multiple_prop t propName id tok =
+  let set_multiple_prop propName id t tok =
     try
       let propToks = Hashtbl.find_all t.multiple propName in
       let () = List.iter (fun (defined_id, tok) -> 
@@ -213,9 +201,9 @@ end = struct
     with
     | Not_found -> Hashtbl.add t.multiple propName (id, tok)
 
-  let singleton_is_set t propName = Hashtbl.mem t.singleton propName
+  let singleton_is_set propName t = Hashtbl.mem t.singleton propName
 
-  let multiple_is_set t propName = Hashtbl.mem t.multiple propName 
+  let multiple_is_set propName t = Hashtbl.mem t.multiple propName 
 
   let singleton_redefined_msg propName (Ast.TokenData(fname, lnum, cnum)) = 
     Printf.sprintf ("%s is redefined. former definition at %s:%d:%d") 
@@ -225,94 +213,88 @@ end = struct
     Printf.sprintf ("%s %s is redefined. former definition at %s:%d:%d") 
                    propName id fname lnum cnum
 
-  let prop_method = "method"
-  let set_method t tok = define_singleton_prop t prop_method tok
-  let method_is_set t = singleton_is_set t prop_method
-  let method_refined_msg tok = singleton_redefined_msg prop_method tok 
-
-  let prop_notes = "notes"
-  let set_notes t tok = define_singleton_prop t prop_notes tok
-  let notes_is_set t = singleton_is_set t prop_notes
-  let notes_refined_msg tok = singleton_redefined_msg prop_notes tok 
-  
-  let prop_summary = "summary"
-  let set_summary t tok = define_singleton_prop t prop_summary tok
-  let summary_is_set t = singleton_is_set t prop_summary
-  let summary_refined_msg tok = singleton_redefined_msg prop_summary tok 
-  
-  let prop_return = "return"
-  let set_return t tok = define_singleton_prop t prop_return tok
-  let return_is_set t = singleton_is_set t prop_return
-  let return_refined_msg tok = singleton_redefined_msg prop_return tok 
-
-  let prop_param = "parameter"
-  let set_param t id tok = define_multiple_prop t prop_param id tok
-  let param_is_set t = multiple_is_set t prop_param
-  let param_refined_msg id tok = multiple_redefined_msg prop_param id tok 
-  
-  let prop_response = "response"
-  let set_response t id tok = define_multiple_prop t prop_response id tok
-  let response_is_set t = multiple_is_set t prop_response 
-  let response_refined_msg id tok = multiple_redefined_msg prop_response id tok 
-
 end
 
 (** 
  * helper function. 
- *  setter: should be one of the OperationPropTbl.set_* function
- *  msg_gener: should be one of the OperationPropTbl.*_refined_msg function
+ *  setter: should be one of the PropTbl.set_* function
+ *  msgGener: should be one of the PropTbl.*_refined_msg function
  *)
-let operationSetAndCheck propTbl pos
-                         (setter: OperationPropTbl.t -> Ast.tokenData -> unit) 
-                         (msg_gener: Ast.tokenData -> string)
+let propertySetAndCheck propTbl pos
+                         (setter: PropTbl.t -> Ast.tokenData -> unit) 
+                         (msgGener: Ast.tokenData -> string)
                          errList =
 try
   let () = setter propTbl pos in
     errList
 with
-| OperationPropTbl.Property_redifined(defined_pos) -> 
-  let errMsg = msg_gener defined_pos in
-    err_sprintf_and_add pos errMsg errList
+| PropTbl.Property_redifined(definedPos) -> 
+  let errMsg = msgGener definedPos in
+    err_create_and_add pos errMsg errList
 ;;
 
 (** 
  * helper function. 
- *  set_checker: should be one of the OperationPropTbl.*_is_set function
+ *  set_checker: should be one of the PropTbl.*_is_set function
  *)
 let operationCheckSet propTbl pos propName
-                      (set_checker: OperationPropTbl.t -> bool)
+                      (set_checker: PropTbl.t -> bool)
                       errList =
   if set_checker propTbl then errList
   else
     let errMsg = Printf.sprintf ("%s is not defined") propName in
-      err_sprintf_and_add pos errMsg errList
+      err_create_and_add pos errMsg errList
 ;;
 
 (*********************
     Analysis
  *********************)
-let analysisModel (env, errList) model =
+let rec analysisProperty (env, errList, propTbl) 
+                     (PropertyDef (pos, VarDef(_, Identifier(_, id), t, _), _)) =
+  let setter = PropTbl.set_multiple_prop "property" id
+  and msgGener = PropTbl.multiple_redefined_msg "property" id in
+  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
+  let (env', errList'') = analysisSWGTyp (env, errList') t in
+    (env', errList'', propTbl)
+
+and analysisArgument (env, errList, propTbl)
+                     (VarDef (pos, Identifier(_, id), t, _)) =
+  let setter = PropTbl.set_multiple_prop "property" id
+  and msgGener = PropTbl.multiple_redefined_msg "property" id in
+  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
+  let (env', errList'') = analysisSWGTyp (env, errList') t in
+    (env', errList'', propTbl)
+
+and analysisModelDef (env, errList) ((_, _, props) as modelDef) =
+  let model = ModelDef modelDef in
   let id = swgtype_toString (ModelType (model)) in
-  let env = addModel env id model in
-    (env, errList)
-;;
+  let env' = addModel env id model
+  and propTbl = PropTbl.init 0 1 in
+  let (env'', errList', _) =
+    List.fold_left analysisProperty (env', errList, propTbl) props
+  in
+    (env'', errList')
 
-let analysisModelDef (env, errList) modelDef =
-  let model = ModelDef (modelDef) in
-    analysisModel (env, errList) model
-;;
+and analysisModelRef (env, errList) ((_, _, args) as modelRef) =
+  let model = ModelRef modelRef in
+  let id = swgtype_toString (ModelType (model)) in
+  let env' = addModel env id model
+  and propTbl = PropTbl.init 0 1 in
+  let (env'', errList', _) =
+    List.fold_left analysisArgument (env', errList, propTbl) args
+  in
+    (env'', errList')
 
-let analysisModelRef (env, errList) modelRef =
-  let model = ModelRef (modelRef) in
-    analysisModel (env, errList) model
-;;
+and analysisModel (env, errList) = function
+  | ModelDef(m) -> analysisModelDef (env, errList) m
+  | ModelRef(m) -> analysisModelRef (env, errList) m
 
-let analysisSWGTyp (env, errList) = function
+and analysisSWGTyp (env, errList) = function
   | ModelType (m) -> analysisModel (env, errList) m
   | ArrayType(SWGSet  (pos, ArrayType(_)))
   | ArrayType(SWGArray(pos, ArrayType(_))) ->
     let errMsg = "nested array/set is not supported." in
-    let errList' = err_sprintf_and_add pos errMsg errList in
+    let errList' = err_create_and_add pos errMsg errList in
       (env, errList')
   | ArrayType(SWGSet   (pos, ModelType(m)))
   | ArrayType(SWGArray (pos, ModelType(m))) ->
@@ -323,7 +305,7 @@ let analysisSWGTyp (env, errList) = function
 let checkForPrimitive errList pos = function
   | PrimitiveType(_) 
   | CompoundType(_) ->errList
-  | _ -> err_sprintf_and_add pos "primitive type required." errList
+  | _ -> err_create_and_add pos "primitive type required." errList
 ;;
 
 let checkForURLParameter errList pos paramsTbl param =
@@ -331,7 +313,7 @@ let checkForURLParameter errList pos paramsTbl param =
     let defined = Hashtbl.find paramsTbl param in
     if defined then
       let errMsg = Printf.sprintf ("parameter %s redefined.") param in
-        err_sprintf_and_add pos errMsg errList
+        err_create_and_add pos errMsg errList
     else
       let () = Hashtbl.replace paramsTbl param true in
         errList  
@@ -339,15 +321,15 @@ let checkForURLParameter errList pos paramsTbl param =
   | Not_found ->
     let errMsg = Printf.sprintf ("the parameter %s not matched to path.") param
     in
-      err_sprintf_and_add pos errMsg errList
+      err_create_and_add pos errMsg errList
 ;;
 
 let analysisParam paramsTbl (env, errList, propTbl) param =
   let (pos, varDef, paramType, _) = param in
   let VarDef (tok', Identifier(_, id), swgtype, required) = varDef in
-  let setter = (fun propTbl -> OperationPropTbl.set_param propTbl id)
-  and msgGener = OperationPropTbl.param_refined_msg id in
-  let propertyChecker = operationSetAndCheck propTbl pos setter msgGener in
+  let setter = PropTbl.set_multiple_prop "parameter" id
+  and msgGener = PropTbl.multiple_redefined_msg "parameter" id in
+  let propertyChecker = propertySetAndCheck propTbl pos setter msgGener in
   let primitiveChecker = 
     (fun errList -> checkForPrimitive errList pos swgtype)
   in 
@@ -372,9 +354,9 @@ let analysisParam paramsTbl (env, errList, propTbl) param =
 let analysisResponse (env, errList, propTbl) 
                      (pos, StatusCode(_, code), modelRef, _) =
   let code_s = string_of_int code in
-  let setter = (fun propTbl -> OperationPropTbl.set_response propTbl code_s)
-  and msgGener = OperationPropTbl.response_refined_msg code_s in
-  let errList' = operationSetAndCheck propTbl pos setter msgGener errList in
+  let setter = PropTbl.set_multiple_prop "response" code_s
+  and msgGener = PropTbl.multiple_redefined_msg "response" code_s in
+  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
   let (env', errList'') = 
     match modelRef with
     | Some modelRef -> analysisModelRef (env, errList') modelRef
@@ -383,46 +365,49 @@ let analysisResponse (env, errList, propTbl)
     (env', errList'', propTbl)
 ;;
 
+let analysisMimes (env, errList, propTbl) mimeDef =
+  let (pos, setter, msgGener) = (
+    match mimeDef with
+        | Produces(pos, MIME(_, mime)) ->
+          (pos,
+           PropTbl.set_multiple_prop "produces" mime,
+           PropTbl.multiple_redefined_msg "produces" mime) 
+        | Consumes(pos, MIME(_, mime)) ->
+          (pos,
+           PropTbl.set_multiple_prop "consumes" mime,
+           PropTbl.multiple_redefined_msg "consumes" mime)
+  ) in
+  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
+    (env, errList', propTbl)
+;;
+
 let analysisReturn (env, errList, propTbl) (pos, swgtyp) =
-  let errList' =
-    operationSetAndCheck propTbl pos
-                         OperationPropTbl.set_return
-                         OperationPropTbl.return_refined_msg
-                         errList
-  in
+  let setter = PropTbl.set_singleton_prop "return"
+  and msgGener = PropTbl.singleton_redefined_msg "return" in
+  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
   let (env', errList'') = analysisSWGTyp (env, errList') swgtyp in
     (env', errList'', propTbl)
 ;;
 
 let analysisSummary (env, errList, propTbl) (pos, _) =
-  let errList' = operationSetAndCheck propTbl pos
-                                      OperationPropTbl.set_summary
-                                      OperationPropTbl.summary_refined_msg
-                                      errList
-  in
+  let setter = PropTbl.set_singleton_prop "summary"
+  and msgGener = PropTbl.singleton_redefined_msg "summary" in 
+  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
     (env, errList', propTbl)
 ;;
 
 let analysisNotes (env, errList, propTbl) (pos, _) =
-  let errList' = operationSetAndCheck propTbl pos
-                                      OperationPropTbl.set_notes
-                                      OperationPropTbl.notes_refined_msg
-                                      errList
-  in
+  let setter = PropTbl.set_singleton_prop "notes"
+  and msgGener = PropTbl.singleton_redefined_msg "notes" in 
+  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
     (env, errList', propTbl)
 ;;
 
 let analysisMethod (env, errList, propTbl) (pos, _) = 
-  let errList' = operationSetAndCheck propTbl pos
-                                      OperationPropTbl.set_method
-                                      OperationPropTbl.method_refined_msg
-                                      errList
-  in
+  let setter = PropTbl.set_singleton_prop "method"
+  and msgGener = PropTbl.singleton_redefined_msg "method" in 
+  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
     (env, errList', propTbl)
-;;
-
-let analysisMimes (env, errList, propTbl) mime =
-  (env, errList, propTbl)
 ;;
 
 let analysisOperationProperty paramsTbl (env, errList, propTbl) = function
@@ -438,19 +423,19 @@ let analysisOperationProperty paramsTbl (env, errList, propTbl) = function
 let analysisOperation paramsTbl (env, errList) operation =
   let (OperationDef (pos, apiName, properties)) = operation in
   let analysisFun = analysisOperationProperty paramsTbl
-  and propTbl = OperationPropTbl.init () in
+  and propTbl = PropTbl.init 4 3 in
   let (env', errList', propTbl') =
     List.fold_left analysisFun (env, errList, propTbl) properties
   in
   let operationCheckSet = operationCheckSet propTbl pos in
   let methodChecker = 
-    operationCheckSet "HTTP method" OperationPropTbl.method_is_set
+    operationCheckSet "HTTP method" (PropTbl.singleton_is_set "method")
   and summaryChecker =
-    operationCheckSet "summary" OperationPropTbl.summary_is_set
+    operationCheckSet "summary" (PropTbl.singleton_is_set "summary")
   and notesChecker = 
-    operationCheckSet "notes" OperationPropTbl.notes_is_set
+    operationCheckSet "notes" (PropTbl.singleton_is_set "notes")
   and returnChecker = 
-    operationCheckSet "return" OperationPropTbl.return_is_set
+    operationCheckSet "return" (PropTbl.singleton_is_set "return")
   in
   let checkerList = 
     [methodChecker; summaryChecker; notesChecker; returnChecker] 
@@ -482,7 +467,7 @@ let analysisApi path (env, errList) api =
     if allParamDefined then (env, errList)
     else 
      let errMsg = Printf.sprintf ("api %s have undefined url parameter") url in
-     let errList' = err_sprintf_and_add pos errMsg errList in
+     let errList' = err_create_and_add pos errMsg errList in
        (env, errList')
 ;;
 
