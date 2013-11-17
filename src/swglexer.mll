@@ -72,6 +72,7 @@ and swg_body = parse
   | "bool"         { T_BOOLEAN  }
   | "date"         { T_DATE     }
   | "datetime"     { T_DATETIME }
+  | "list"
   | "array"        { T_ARRAY    }
   | "set"          { T_SET      }
   | "option"       { T_OPTION   }
