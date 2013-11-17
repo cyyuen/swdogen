@@ -3,16 +3,21 @@
   "swaggerVersion": "1.2",
   "resourcePath": "/pet",
   "basePath": "http://petstore.swagger.wordnik.com/api",
-  "produces": [
-    "text/html", "text/plain", "application/xml", "application/json"
-  ],
-  "consumes": [ "application/xml", "application/json" ],
+  "produces": [ "text/html", "text/plain", "application/xml" ],
+  "consumes": [ "application/xml" ],
   "apis": [
     {
       "path": "/pet/findByStatus",
       "operations": [
         {
           "nickname": "findPetsByStatus",
+          "type": "array",
+          "uniqueItems": false,
+          "items": { "$ref": "Pet" },
+          "notes":
+            "Multiple status values can be provided with comma seperated strings",
+          "summary": "Finds Pets by status",
+          "method": "GET",
           "parameters": [
             {
               "name": "status",
@@ -26,14 +31,7 @@
           ],
           "responseMessages": [
             { "code": 400, "message": "Invalid status value" }
-          ],
-          "type": "array",
-          "uniqueItems": false,
-          "items": { "$ref": "Pet" },
-          "notes":
-            "Multiple status values can be provided with comma seperated strings",
-          "summary": "Finds Pets by status",
-          "method": "GET"
+          ]
         }
       ]
     },
@@ -42,6 +40,12 @@
       "operations": [
         {
           "nickname": "getPetById",
+          "type": "Pet",
+          "notes": "Returns a pet based on ID",
+          "summary": "Find pet by ID",
+          "method": "GET",
+          "produces": [ "application/json" ],
+          "consumes": [ "application/json" ],
           "parameters": [
             {
               "name": "petId",
@@ -61,11 +65,7 @@
               "message": "Pet not found"
             },
             { "code": 400, "message": "Invalid ID supplied" }
-          ],
-          "type": "Pet",
-          "notes": "Returns a pet based on ID",
-          "summary": "Find pet by ID",
-          "method": "GET"
+          ]
         }
       ]
     },
@@ -74,6 +74,13 @@
       "operations": [
         {
           "nickname": "findPetsByTags",
+          "type": "array",
+          "uniqueItems": false,
+          "items": { "$ref": "Pet" },
+          "notes":
+            "Muliple tags can be provided with comma seperated strings. Use tag1, tag2, tag3 for testing.",
+          "summary": "Finds Pets by tags",
+          "method": "GET",
           "parameters": [
             {
               "name": "tags",
@@ -85,14 +92,7 @@
           ],
           "responseMessages": [
             { "code": 400, "message": "Invalid tag value" }
-          ],
-          "type": "array",
-          "uniqueItems": false,
-          "items": { "$ref": "Pet" },
-          "notes":
-            "Muliple tags can be provided with comma seperated strings. Use tag1, tag2, tag3 for testing.",
-          "summary": "Finds Pets by tags",
-          "method": "GET"
+          ]
         }
       ]
     }

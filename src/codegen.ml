@@ -33,10 +33,10 @@ let kstr k s = prop k (genStr s)
 let kval k v = prop k v 
 
 (* key - object : "key" : { obj } *)
-let kobj k o = prop k (genObject o) 
+let kobj k o = if o = "" then "" else prop k (genObject o) 
 
 (* key - array : "key" : [ arr ] *)
-let karr k a = prop k (genArray a)
+let karr k a = if a = "" then "" else prop k (genArray a)
 
 let addToModelSet modelSet = function
   | None -> modelSet
@@ -140,18 +140,24 @@ let genAPIVersion ver = kstr "apiVersion" ver
 
 let genBasePath (_, URL(_, path)) = kstr "basePath" path
 
+let genMIME (_, MIME(_, p)) = genStr p
+
+let genProducesList pl = karr "produces" (commaJoin pl)
+
+let genConsumesList cl = karr "consumes" (commaJoin cl)
+
 let genMIMEList mimeList =
   let (produces, consumes) =
     List.fold_left (fun (pl, cl) mime ->
                       match mime with
-                          | (Produces(_, MIME(_, p))) -> 
-                              ((genStr p) :: pl, cl)
-                          | (Consumes(_, MIME(_, c))) -> 
-                              (pl, (genStr c) :: cl)) 
+                          | (Produces(mime)) -> 
+                              ((genMIME mime) :: pl, cl)
+                          | (Consumes(mime)) -> 
+                              (pl, (genMIME mime) :: cl)) 
                    ([], []) mimeList
   in
-  let producesList = karr "produces" (commaJoin produces)
-  and consumesList = karr "consumes" (commaJoin consumes) in
+  let producesList = genProducesList produces
+  and consumesList = genConsumesList consumes in
     commaJoin [producesList; consumesList]
 
 let genResourcePath (URL(_, path)) = kstr "resourcePath" path
@@ -225,39 +231,59 @@ let genParam (_, varDef, paramTyp, desc) =
       (commaJoin [paramName; paramTypStr; desc; requiredStr; typStr]), model)
 ;;
 
-let genAPIProp (propList, modelSet, paramList, responsesList) = function
+let genAPIProp (modelSet, propHtbl) = function
   | Method (httpMethod) ->
     let httpMethod = genHttpMethod httpMethod in
-      (httpMethod :: propList, modelSet, paramList, responsesList)
+    let () = Hashtbl.add propHtbl "propList" httpMethod in
+      (modelSet, propHtbl)
   | Return (return) ->
     let (return, model) = genReturnType return in
-    let modelSet = addToModelSet modelSet model in
-      (return :: propList, modelSet, paramList, responsesList)
-  | Summary (s) -> 
-    ((genSummary s) :: propList, modelSet, paramList, responsesList)
+    let modelSet = addToModelSet modelSet model
+    and () = Hashtbl.add propHtbl "propList" return in
+      (modelSet, propHtbl)
+  | Summary (s) ->
+    let summary = genSummary s in
+    let () = Hashtbl.add propHtbl "propList" summary in
+      (modelSet, propHtbl)
   | Notes (n) ->
-    ((genNotes n) :: propList, modelSet, paramList, responsesList)
+    let notes = genNotes n in
+    let () = Hashtbl.add propHtbl "propList" notes in
+      (modelSet, propHtbl)
   | ResponseMsg (r) ->
     let (response, model) = genResponseMsg r in
-    let modelSet = addToModelSet modelSet model in
-      (propList, modelSet, paramList, response :: responsesList)
+    let modelSet = addToModelSet modelSet model
+    and () = Hashtbl.add propHtbl "response" response in
+      (modelSet, propHtbl)
   | ParamDef (p) ->
     let (param, model) = genParam p in
-    let modelSet = addToModelSet modelSet model in
-      (propList, modelSet, param :: paramList, responsesList)
-  | LocalMIME (m) ->
-      (propList, modelSet, paramList, responsesList)
+    let modelSet = addToModelSet modelSet model
+    and () = Hashtbl.add propHtbl "param" param in
+      (modelSet, propHtbl)
+  | LocalMIME (Produces(p)) ->
+    let produces = genMIME p in
+    let () = Hashtbl.add propHtbl "produces" produces in
+      (modelSet, propHtbl)
+  | LocalMIME (Consumes(c)) ->
+    let consumes = genMIME c in
+    let () = Hashtbl.add propHtbl "consumes" consumes in
+      (modelSet, propHtbl)
 ;;
 
 let genOperation (OperationDef (_, Identifier(_, name), props)) =
-  let (propList, models, params, responses) = 
-    List.fold_left genAPIProp ([], StringSet.empty, [], []) props
+  let (models, propHtbl) = 
+    List.fold_left genAPIProp (StringSet.empty, Hashtbl.create 5) props
   in 
-  let params = karr "parameters" (commaJoin params)
-  and responses = karr "responseMessages" (commaJoin responses)
-  and nickname = kstr "nickname" name
-  and propDefList = commaJoin propList in
-    (genObject (commaJoin [nickname; params; responses; propDefList])), models
+  let nickname = kstr "nickname" name 
+  and params = 
+    karr "parameters" (commaJoin (Hashtbl.find_all propHtbl "param"))
+  and responses = 
+    karr "responseMessages" (commaJoin (Hashtbl.find_all propHtbl "response"))
+  and propls = commaJoin (Hashtbl.find_all propHtbl "propList")
+  and produces = genProducesList (Hashtbl.find_all propHtbl "produces")
+  and consumes = genConsumesList (Hashtbl.find_all propHtbl "consumes") in
+    genObject (commaJoin [nickname; propls; produces; 
+                          consumes; params; responses;]),
+    models
 ;;
 
 (* val genApi : Ast.apiDef -> (string * StringSet.t) *)

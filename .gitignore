@@ -10,3 +10,5 @@ _build/*
 *.log
 
 *.native
+
+*.swp

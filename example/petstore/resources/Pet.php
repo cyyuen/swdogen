@@ -5,9 +5,6 @@ namespace Petstore\Resources;
  * @resource /pet "Operations about pets"
  * @basePath http://petstore.swagger.wordnik.com/api
  *
- * @consumes application/json
- * @produces application/json
- *
  * @consumes application/xml
  * @produces application/xml
  * @produces text/plain
@@ -22,6 +19,8 @@ class Pet
      * @method GET
      * @summary "Find pet by ID"
      * @notes "Returns a pet based on ID"
+     * @consumes application/json
+     * @produces application/json
      * @return Pet
      * @response 400 "Invalid ID supplied"
      * @response 404 Tag "Pet not found"
