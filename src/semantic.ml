@@ -210,7 +210,7 @@ end = struct
                    propName fname lnum cnum
 
   let multiple_redefined_msg propName id (Ast.TokenData(fname, lnum, cnum)) = 
-    Printf.sprintf ("%s %s is redefined. former definition at %s:%d:%d") 
+    Printf.sprintf ("%s(%s) is redefined. former definition at %s:%d:%d") 
                    propName id fname lnum cnum
 
 end
