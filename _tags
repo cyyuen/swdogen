@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: a4d4fc0cd17f46703cc74c9c72b29057)
+# DO NOT EDIT (digest: b0d65c858cd0bf8d68639beddbf2caee)
 # Ignore VCS directories, you can use the same kind of rule outside 
 # OASIS_START/STOP if you want to exclude directories that contains 
 # useless stuff for the build process
@@ -17,7 +17,6 @@
 "swdogen/swdogen.cmxs": use_swdogen
 "swdogen/codegen.cmx": for-pack(Swdogen)
 "swdogen/parser.cmx": for-pack(Swdogen)
-"swdogen/url.cmx": for-pack(Swdogen)
 "swdogen/semantic.cmx": for-pack(Swdogen)
 "swdogen/ast.cmx": for-pack(Swdogen)
 "swdogen/config.cmx": for-pack(Swdogen)
@@ -26,11 +25,16 @@
 "swdogen/discover.cmx": for-pack(Swdogen)
 "swdogen/swgparser.cmx": for-pack(Swdogen)
 "swdogen/swglexer.cmx": for-pack(Swdogen)
-# Executable swdogen
-<swdogen/swdogen.{native,byte}>: pkg_atdgen
-<swdogen/swdogen.{native,byte}>: pkg_unix
+"swdogen/url.cmx": for-pack(Swdogen)
 <swdogen/*.ml{,i}>: pkg_atdgen
 <swdogen/*.ml{,i}>: pkg_unix
+# Executable swdogen
+<src/main.{native,byte}>: use_swdogen
+<src/main.{native,byte}>: pkg_atdgen
+<src/main.{native,byte}>: pkg_unix
+<src/*.ml{,i}>: use_swdogen
+<src/*.ml{,i}>: pkg_atdgen
+<src/*.ml{,i}>: pkg_unix
 # Executable test
 <test/test.{native,byte}>: use_swdogen
 <test/test.{native,byte}>: pkg_oUnit

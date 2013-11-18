@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 37d08521be440e4cae6588b480de8d0e) *)
+(* DO NOT EDIT (digest: 6e6b20698997923aea30f0bcaa96987b) *)
 module OASISGettext = struct
 (* # 21 "src/oasis/OASISGettext.ml" *)
 
@@ -480,7 +480,7 @@ let package_default =
      MyOCamlbuildBase.lib_ocaml = [("swdogen", ["swdogen"])];
      lib_c = [];
      flags = [];
-     includes = [("test", ["swdogen"])];
+     includes = [("test", ["swdogen"]); ("src", ["swdogen"])];
      }
   ;;
 

@@ -1,4 +1,7 @@
+open Swdogen
+
 let main () =
+  let start_time = Sys.time () in
   (* scan the current dir for config file, .swg.conf *)
   let config = Config.init () in
   (* Get all files under the project root except the excluded ones *)
@@ -10,7 +13,10 @@ let main () =
   (* Codegen *)
   let (resourceDesc, resourceList) = Codegen.gen config env in
   (* Deploy *)
-    Deployer.deploy (Deployer.init config) resourceDesc resourceList
+  let () = Deployer.deploy (Deployer.init config) resourceDesc resourceList in
+
+  let end_time = Sys.time () in
+    Printf.printf ("used %f seconds. \n") (end_time -. start_time)
 ;;
 
 main ()

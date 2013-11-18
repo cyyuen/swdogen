@@ -1,8 +1,7 @@
 # OASIS_START
-# DO NOT EDIT (digest: 98e4ae0485474bc530c0ca48c549aa9d)
+# DO NOT EDIT (digest: 60f27705d714eff1eaa488efdb937647)
 Codegen
 Parser
-Url
 Semantic
 Ast
 Config
@@ -11,4 +10,5 @@ Deployer
 Discover
 Swgparser
 Swglexer
+Url
 # OASIS_STOP

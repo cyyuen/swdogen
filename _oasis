@@ -27,10 +27,9 @@ Library swdogen
   Install:              true
 
 Executable swdogen
-  Path:                 swdogen
-  BuildDepends:         atdgen (>= 1.2.3), unix
-  BuildTools+:          ocamlmod, ocamlyacc, ocamllex, ocamlify
-  MainIs:               swdogen.ml
+  Path:                 src
+  BuildDepends:         atdgen (>= 1.2.3), unix, swdogen
+  MainIs:               main.ml
   CompiledObject:       best
 
 Document swdogen
@@ -52,3 +51,8 @@ Executable test
 Test test
   Command:              $test
   WorkingDirectory:     test
+
+SourceRepository master
+  Type:     git
+  Location: https://github.com/dotcy/swdogen.git
+  Browser:  https://github.com/dotcy/swdogen
