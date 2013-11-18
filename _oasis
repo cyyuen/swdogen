@@ -5,13 +5,50 @@ Synopsis:    SWagger DOcumentation GENerator
 Description: Scan and parse your source code and generate valid swagger document feed to swagger-ui
 Authors:     C.Y. yuen
 Maintainers: colsy2@gmail.com
+Copyrights:  (C) 2013 C.Y. Yuen
+ConfType:    Internal (0.3)
+BuildType:   OCamlbuild (0.3)
+InstallType: Internal (0.3)
 Homepage:    https://github.com/dotcy/swdogen/wiki
 License:     MIT
+Plugins:     META (0.3)
+BuildTools:  ocamlbuild
+
+Library swdogen
+  Path:                 swdogen
+  Modules:              Codegen, Parser, Semantic, Ast, Config, Error, Deployer, Discover
+  InternalModules:      Swgparser, Swglexer, Url
+  Pack:                 true
+  Findlibname:          swdogen
+  CompiledObject:       Best
+  BuildDepends:         atdgen (>= 1.2.3), unix
+  BuildTools+:          ocamlmod, ocamlyacc, ocamllex, ocamlify
+  XMETADescription:     _oasis file functions
+  Install:              true
 
 Executable swdogen
-  Path:           src
-  BuildTools:     ocamlbuild
-  BuildDepends:   atdgen, unix
-  MainIs:         swdogen.ml
-  CompiledObject: best
+  Path:                 swdogen
+  BuildDepends:         atdgen (>= 1.2.3), unix
+  BuildTools+:          ocamlmod, ocamlyacc, ocamllex, ocamlify
+  MainIs:               swdogen.ml
+  CompiledObject:       best
+
+Document swdogen
+  Title:                Swdogen docs
+  Type:                 ocamlbuild (0.3)
+  BuildTools+:          ocamldoc
+  Install:              true
+  XOCamlbuildPath:      swdogen
+  XOCamlbuildLibraries: swdogen
+
+Executable test
+  Path:                 test
+  BuildTools:           ocamlbuild
+  MainIs:               test.ml
+  Install:              false
+  CompiledObject:       best
+  BuildDepends:         oUnit (>= 2.0.0), swdogen
   
+Test test
+  Command:              $test
+  WorkingDirectory:     test

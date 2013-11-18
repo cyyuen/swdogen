@@ -1,5 +1,5 @@
 (* OASIS_START *)
-(* DO NOT EDIT (digest: 17b1dd3d757048351d0fe25d1448f89f) *)
+(* DO NOT EDIT (digest: 37d08521be440e4cae6588b480de8d0e) *)
 module OASISGettext = struct
 (* # 21 "src/oasis/OASISGettext.ml" *)
 
@@ -476,12 +476,17 @@ end
 # 476 "myocamlbuild.ml"
 open Ocamlbuild_plugin;;
 let package_default =
-  {MyOCamlbuildBase.lib_ocaml = []; lib_c = []; flags = []; includes = []; }
+  {
+     MyOCamlbuildBase.lib_ocaml = [("swdogen", ["swdogen"])];
+     lib_c = [];
+     flags = [];
+     includes = [("test", ["swdogen"])];
+     }
   ;;
 
 let dispatch_default = MyOCamlbuildBase.dispatch_default package_default;;
 
-# 485 "myocamlbuild.ml"
+# 490 "myocamlbuild.ml"
 (* OASIS_STOP *)
 module Atdgen = struct
   let cmd = "atdgen" (* TODO detect from ./configure phase *)
