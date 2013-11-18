@@ -87,7 +87,7 @@ let genConstantLiteral = function
 ;;
 
 let genEnumList enumList =
-  let enum = List.map genConstantLiteral enumList in
+  let enum = Parmap.parmap genConstantLiteral (Parmap.L enumList) in
     karr "enum" (commaJoin enum)
 ;;
 
@@ -289,7 +289,7 @@ let genOperation (OperationDef (_, Identifier(_, name), props)) =
 (* val genApi : Ast.apiDef -> (string * StringSet.t) *)
 let genApi (APIDef (_, (URL(_, url)), operations)) = 
   let (opertionList, modelSetList) = 
-    List.split (List.map genOperation operations) 
+    List.split (Parmap.parmap genOperation (Parmap.L operations)) 
   in
   let modelSet = List.fold_left StringSet.union StringSet.empty modelSetList
   and operations = karr "operations" (commaJoin opertionList)
@@ -349,7 +349,7 @@ let genModel env model =
       and id = swgtype_toString (ModelType (modelRef)) in
         (id, props)
   ) in
-  let (propDefList, submodelList) = List.split (List.map genModelProp props) in
+  let (propDefList, submodelList) = List.split (Parmap.parmap genModelProp (Parmap.L props)) in
   let (propList, requiredList) = List.split propDefList in
   let props = kobj "properties" (commaJoin propList)
   and required = karr "required" (commaJoin requiredList)
@@ -369,7 +369,7 @@ let rec genModels env ?allmodels:(allModels = StringSet.empty) modelSet =
                     []
   in
   let genModel = genModel env in
-  let (modelList, submodelList) = List.split (List.map genModel modelList) in
+  let (modelList, submodelList) = List.split (Parmap.parmap genModel (Parmap.L modelList)) in
   let submodelSet = List.fold_left StringSet.union StringSet.empty submodelList
   and allModels = StringSet.union modelSet allModels in
   let newmodels = StringSet.diff submodelSet allModels in
@@ -383,7 +383,7 @@ let rec genModels env ?allmodels:(allModels = StringSet.empty) modelSet =
 let genResource env apiVersion swgVersion
                 path (ResourceDef (_, rpath, desc, resourceProps, apiDefs)) 
                 (resourceDescList, resourceList) =
-  let (apiList, modelSetList) = List.split (List.map genApi apiDefs) in
+  let (apiList, modelSetList) = List.split (Parmap.parmap genApi (Parmap.L apiDefs)) in
   let modelSet = List.fold_left StringSet.union StringSet.empty modelSetList in
   let modelList = genModels env modelSet in
   let ResourceProps (BasePath(basePath), mimeList) = resourceProps in

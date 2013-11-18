@@ -6,14 +6,10 @@ let parse filename =
     ast
 
 let parseFiles files =
+  let asts = Parmap.parmap parse (Parmap.L files) in
   let rec awc asts = function
     | [] -> asts
-    | file :: rl ->
-      try
-        let ast = parse file in
-          awc (ast :: asts) rl
-      with
-      | Ast.Invalid_ast ->
-          awc asts rl 
-  in awc [] files
+    | Ast.EmptyFile :: rl -> awc asts rl
+    | Ast.SWGSourceFile(_) as ast:: rl -> awc (ast :: asts) rl
+  in awc [] asts
 ;;

@@ -19,12 +19,11 @@ Library swdogen
   Modules:              Codegen, Parser, Semantic, Ast, Config, Error, Deployer, Discover
   InternalModules:      Swgparser, Swglexer, Url
   Pack:                 true
-  Findlibname:          swdogen
   CompiledObject:       Best
-  BuildDepends:         atdgen (>= 1.2.3), unix
+  BuildDepends:         atdgen (>= 1.2.3), unix, parmap
   BuildTools+:          ocamlmod, ocamlyacc, ocamllex, ocamlify
   XMETADescription:     _oasis file functions
-  Install:              true
+  Install:              false
 
 Executable swdogen
   Path:                 src

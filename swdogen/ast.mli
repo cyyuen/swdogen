@@ -1,5 +1,3 @@
-exception Invalid_ast
-
 type tokenData = TokenData of ( string * int * int)
 
 type numLiteral = Int   of (tokenData * int)
@@ -93,5 +91,6 @@ type swgDoc = ResourceDefs of resourceDef list
             | ModelDefs of modelDef list
 
 type sourceFile = SWGSourceFile of swgDoc list
+                | EmptyFile
 
 val swgtype_toString : swgtype -> string

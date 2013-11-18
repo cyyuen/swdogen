@@ -47,4 +47,4 @@ let deployResourceDesc t = deployResource t "api-docs"
 let deploy t resourceDesc resourceList =
   let () = deployResourceDesc t resourceDesc in
   let deployResource_t = deployResource t in
-    List.iter (fun (pth, content) -> deployResource_t pth content) resourceList
+    Parmap.pariter (fun (pth, content) -> deployResource_t pth content) (Parmap.L resourceList)

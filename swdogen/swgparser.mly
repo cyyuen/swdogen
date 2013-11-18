@@ -225,5 +225,5 @@ swg_doc_item_list:
 ;
 single_swg_source_file:
     swg_doc_item_list EOF                                        { SWGSourceFile($1) }
-  | EOF                                                          { raise Invalid_ast }
+  | EOF                                                          { EmptyFile }
 ;
