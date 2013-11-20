@@ -29,7 +29,9 @@
               "enum": [ "available", "pending", "sold" ]
             }
           ],
-          "responses": [ { "code": 400, "message": "Invalid status value" } ]
+          "responseMessages": [
+            { "code": 400, "message": "Invalid status value" }
+          ]
         }
       ]
     },
@@ -56,7 +58,7 @@
               "maxinum": 100000.0
             }
           ],
-          "responses": [
+          "responseMessages": [
             {
               "responseModel": "Tag",
               "code": 404,
@@ -88,7 +90,9 @@
               "type": "string"
             }
           ],
-          "responses": [ { "code": 400, "message": "Invalid tag value" } ]
+          "responseMessages": [
+            { "code": 400, "message": "Invalid tag value" }
+          ]
         }
       ]
     }
