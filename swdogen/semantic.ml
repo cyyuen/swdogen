@@ -1,4 +1,5 @@
 open Ast
+open Parmap
 
 exception Semantic_error
 
@@ -7,46 +8,12 @@ exception Semantic_error
  *********************)
 type env = {
   (* path -> resource *)
-  resourceBinding : (string, Ast.resourceDef) Hashtbl.t;
+  somBinding : (string, Som.t) Hashtbl.t;
   (* id   -> model *)
   modelRefBinding    : (string, Ast.modelRef) Hashtbl.t;
   (* id   -> model *)
   modelDefBinding : (string, Ast.modelDef) Hashtbl.t;
-  (* *)
-  resourceAPIBinding : (string, (string, Ast.apiDef) Hashtbl.t) Hashtbl.t;
 }
-;;
-
-let rec bindAPIList apiBinding = function
-  | [] -> apiBinding
-  | APIDef (_, URL(_, url_s), operations) as api :: tl ->
-    try
-      let APIDef(pos, url, ops) = Hashtbl.find apiBinding url_s in
-
-      let api = APIDef(pos, url, ops @ operations) in
-      let () = Hashtbl.replace apiBinding url_s api in
-        bindAPIList apiBinding tl 
-    with
-    | Not_found -> 
-      let () = print_string url_s in
-      let () = Hashtbl.add apiBinding url_s api in
-        bindAPIList apiBinding tl
-;;
-
-let mergeAPIList apiBinding apiList =
-  let binding = bindAPIList apiBinding apiList in
-    Hashtbl.fold (fun k api cl -> api :: cl) binding []
-;;
-
-let mergeResource env 
-                  (ResourceDef(pos, (URL(_, p) as path), desc, rsrcProps, apiList)) 
-                  (ResourceDef(_, URL(_, p'), _, rsrcProps', apiList')) =
-  let apiBinding = Hashtbl.find env.resourceAPIBinding p
-  and ResourceProps (basePath, mimeList) = rsrcProps
-  and ResourceProps (_, mimeList') = rsrcProps' in
-  let mergedApiList = mergeAPIList apiBinding apiList'
-  and mergedRscProp = ResourceProps (basePath, mimeList @ mimeList') in
-    ResourceDef(pos, path, desc, mergedRscProp, mergedApiList)
 ;;
 
 let fetchModelDefById env modelId = Hashtbl.find env.modelDefBinding modelId
@@ -61,57 +28,33 @@ let fetchModelById env modelId =
       (ModelRef (modelRef))
 ;;
 
-let foldResource f env init = Hashtbl.fold f env.resourceBinding init
+let getSoms env = Hashtbl.fold (fun _ elt lst -> elt :: lst) env.somBinding [] 
 
-let addAPIBinding env path url api =
-  try
-    let binding = Hashtbl.find env.resourceAPIBinding path in
-      try
-        let _ = Hashtbl.find binding url in
-          env
-      with
-      | Not_found ->
-        let () = Hashtbl.add binding url api in
-        let () = Hashtbl.replace env.resourceAPIBinding path binding in
-          env
-  with
-  | Not_found ->
-    let binding = Hashtbl.create 100 in
-    let () = Hashtbl.add binding url api in
-    let () = Hashtbl.add env.resourceAPIBinding path binding in
-      env
-;;
+let addSom env path som =
+  if Hashtbl.mem env.somBinding path then
+    let som' = Hashtbl.find env.somBinding path in
+    let () = Hashtbl.replace env.somBinding path (Som.merge_som som som') in env
+  else
+    let () = Hashtbl.add env.somBinding path som in env
 
 let addResource env path resource =
-  try
-    let resrc = Hashtbl.find env.resourceBinding path in
-    let resrc = mergeResource env resrc resource in
-    let () = Hashtbl.replace env.resourceBinding path resrc in
-      env
-  with
-  | Not_found ->
-    let () = Hashtbl.add env.resourceBinding path resource in
-      env
+  if Hashtbl.mem env.somBinding path then
+    let som = Hashtbl.find env.somBinding path in
+    let () = Hashtbl.replace env.somBinding path (Som.merge_resource som resource) in env
+  else
+    let () = Hashtbl.add env.somBinding path (Som.of_resource resource) in env 
 ;;
 
 let addModelDef env modelId model =
-  try
-    let _ = Hashtbl.find env.modelDefBinding modelId in
-      env        
-  with
-  | Not_found -> 
-    let () = Hashtbl.add env.modelDefBinding modelId model in
-      env
+  if Hashtbl.mem env.modelDefBinding modelId then env
+  else
+    let () = Hashtbl.add env.modelDefBinding modelId model in env
 ;;
 
 let addModelRef env modelId model =
-  try
-    let _ = Hashtbl.find env.modelRefBinding modelId in
-      env        
-  with
-  | Not_found -> 
-    let () = Hashtbl.add env.modelRefBinding modelId model in
-      env
+  if Hashtbl.mem env.modelRefBinding modelId then env
+  else
+    let () = Hashtbl.add env.modelRefBinding modelId model in env
 ;;
 
 let addModel env modelId = function
@@ -120,10 +63,9 @@ let addModel env modelId = function
 ;;
 
 let createEnv () = {
-  resourceBinding    = Hashtbl.create 100;
+  somBinding    = Hashtbl.create 100;
   modelDefBinding    = Hashtbl.create 100;
   modelRefBinding    = Hashtbl.create 100;
-  resourceAPIBinding = Hashtbl.create 100
 }
 ;;
 
@@ -183,14 +125,14 @@ end = struct
   }
 
   let set_singleton_prop propName t tok = 
-    try
+    if Hashtbl.mem t.singleton propName then
       let propTok = Hashtbl.find t.singleton propName in
         raise (Property_redifined (propTok))
-    with
-    | Not_found -> Hashtbl.add t.singleton propName tok
+    else
+      Hashtbl.add t.singleton propName tok
 
   let set_multiple_prop propName id t tok =
-    try
+    if Hashtbl.mem t.multiple propName then
       let propToks = Hashtbl.find_all t.multiple propName in
       let () = List.iter (fun (defined_id, tok) -> 
                             if id = defined_id then raise (Property_redifined (tok))
@@ -198,8 +140,8 @@ end = struct
                           ) propToks
       in
         Hashtbl.add t.multiple propName (id, tok)
-    with
-    | Not_found -> Hashtbl.add t.multiple propName (id, tok)
+    else
+      Hashtbl.add t.multiple propName (id, tok)
 
   let singleton_is_set propName t = Hashtbl.mem t.singleton propName
 
@@ -309,7 +251,7 @@ let checkForPrimitive errList pos = function
 ;;
 
 let checkForURLParameter errList pos paramsTbl param =
-  try
+  if Hashtbl.mem paramsTbl param then
     let defined = Hashtbl.find paramsTbl param in
     if defined then
       let errMsg = Printf.sprintf ("parameter %s redefined.") param in
@@ -317,8 +259,7 @@ let checkForURLParameter errList pos paramsTbl param =
     else
       let () = Hashtbl.replace paramsTbl param true in
         errList  
-  with
-  | Not_found ->
+  else
     let errMsg = Printf.sprintf ("the parameter %s not matched to path.") param
     in
       err_create_and_add pos errMsg errList
@@ -443,18 +384,14 @@ let analysisOperation paramsTbl (env, errList) operation =
     (env', (applyCheck errList' checkerList))
 ;;
 
-let analysisApi path (env, errList) api =
+let analysisApi (env, errList) api =
   let (APIDef(pos, URL(_, url), operations)) = api in
-  let env = addAPIBinding env path url api 
-  and urlparams = Url.url_params url in
-  let createParamTbl tbl param =
-    (try
-      let _ = Hashtbl.find tbl param in tbl
-     with
-     | Not_found -> 
-       let () = Hashtbl.add tbl param false in tbl)
-  in
-  let paramsTbl = List.fold_left  createParamTbl
+  let urlparams = Url.url_params url in
+  let createParamTbl tbl param = (
+    if Hashtbl.mem tbl param then tbl
+    else let () = Hashtbl.add tbl param false in tbl
+  ) in
+  let paramsTbl = List.fold_left createParamTbl
                   (Hashtbl.create 10)
                   urlparams
   in
@@ -471,55 +408,68 @@ let analysisApi path (env, errList) api =
        (env, errList')
 ;;
 
-let analysisResourceDef (env, errList) resource =
-  let (ResourceDef(pos, rpath, desc, rsrcProps, apis)) = resource in
-  let URL(_, path) = rpath in
-  let apiCombine apis = (
-    let apiTbl = Hashtbl.create 10 in
-    let apiAdd (APIDef (p, url, operations) as api) = (
-      let URL(_, path) = url in
-      try
-        let APIDef (_, _, opers) = Hashtbl.find apiTbl path in
-          Hashtbl.replace apiTbl path (APIDef (p, url, operations @ opers))
-       with
-       | Not_found -> Hashtbl.add apiTbl path api
-    ) in
-    let () = List.iter apiAdd apis in
-      Hashtbl.fold (fun p api apis -> api :: apis) apiTbl []    
-  ) in
-  let mergedApis = apiCombine apis in
-  let env = 
-    addResource env path (ResourceDef(pos, rpath, desc, rsrcProps, mergedApis)) 
-  in
+(**
+ * val analysisResourceDef : Ast.resourceDef -> (env, errList)
+ *)
+let analysisResourceDef (ResourceDef(_, URL(_, path), _, _, apis) as resourceDef) =
+  let env = createEnv ()
+  and errList = Error.create () in
+  let env = addResource env path resourceDef in
   let (env', errList') = 
-    List.fold_left (analysisApi path) (env, errList) apis
+    List.fold_left analysisApi (env, errList) apis
   in
     (env', errList')
 ;;
 
-let rec analysisResourceList (env, errList) = function
-  | [] -> (env, errList)
-  | (SWGSourceFile ([])) :: rest ->
-    analysisResourceList (env, errList) rest 
-  | (SWGSourceFile (ResourceDefs(resourceDefs) :: srcRest)) :: rest ->
-    let (env, errList) = 
-      List.fold_left analysisResourceDef (env, errList) resourceDefs
-    in
-      analysisResourceList (env, errList) ((SWGSourceFile (srcRest)) :: rest)
-  | (SWGSourceFile (ModelDefs(modelDefs) :: mdlRest)) :: rest ->
-    let (env', errList) = 
-      List.fold_left analysisModelDef (env, errList) modelDefs
-    in
-      analysisResourceList (env, errList) ((SWGSourceFile (mdlRest)) :: rest)
+(**
+ * val analysisSWGDocs : Ast.swgDoc -> (env, errList) list
+ *)
+let analysisSwgDocs = function
+  | ResourceDefs (rds) -> parmap analysisResourceDef (L rds)
+  | ModelDefs (mds) -> 
+    let env = createEnv ()
+    and errList = Error.create () in
+    let analysisModelDef_init = analysisModelDef (env, errList) in
+      parmap analysisModelDef_init (L mds)
 ;;
 
-let analysis resourceList = 
-  let env = createEnv ()
-  and errList = Error.create () in
-  let (env, errList) = analysisResourceList (env, errList) resourceList in
+(**
+ * val analysisFile : Ast.sourceFile -> (env, errList) list
+ *)
+let analysisFile = function
+  | EmptyFile -> []
+  | SWGSourceFile (swgDocs) -> List.concat (parmap analysisSwgDocs (L swgDocs))
+;;
+
+let concatEnv env env' =
+  let { 
+    somBinding = somBinding;
+    modelRefBinding = modelRefBinding;
+    modelDefBinding = modelDefBinding
+  } = env in
+  let env_r = 
+    Hashtbl.fold (fun path som env -> addSom env path som)
+                 somBinding env'
+  in
+  let env_md =
+    Hashtbl.fold (fun id model env -> addModelRef env id model) 
+                 modelRefBinding env_r
+  in
+    Hashtbl.fold (fun id model env -> addModelDef env id model)
+                modelDefBinding env_md
+;;
+
+(**
+ * 
+ *)
+let analysis fileLists = 
+  let (envList, errListList) = 
+    List.split (List.concat (parmap analysisFile (L fileLists))) 
+  in
+  let errList = Error.concat errListList in
     if Error.is_empty errList then
-      env
+      parfold concatEnv (L envList) (createEnv ()) concatEnv
     else
-      let () = Error.print_all errList in 
+      let () = Error.print_all errList in
         raise Semantic_error
   

@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: c8f13a304a3945ad3dfee9089a585d8c)
+# DO NOT EDIT (digest: c539a7b9f5901ae24b8409009ee41177)
 Codegen
 Parser
 Semantic
@@ -8,4 +8,5 @@ Config
 Error
 Deployer
 Discover
+Som
 # OASIS_STOP

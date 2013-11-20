@@ -16,12 +16,20 @@ BuildTools:  ocamlbuild
 
 Library swdogen
   Path:                 swdogen
-  Modules:              Codegen, Parser, Semantic, Ast, Config, Error, Deployer, Discover
+  Modules:              Codegen, 
+                        Parser, 
+                        Semantic, 
+                        Ast, 
+                        Config, 
+                        Error, 
+                        Deployer, 
+                        Discover, 
+                        Som
   InternalModules:      Swgparser, Swglexer, Url
   Pack:                 true
   CompiledObject:       Best
   BuildDepends:         atdgen (>= 1.2.3), unix, parmap
-  BuildTools+:          ocamlmod, ocamlyacc, ocamllex, ocamlify
+  BuildTools+:          ocamlyacc, ocamllex
   XMETADescription:     _oasis file functions
   Install:              false
 

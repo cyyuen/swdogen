@@ -134,41 +134,33 @@ and genTyp ?is_return:(is_return=false) = function
    AST codegen
  *********************)
 
-let genSWGVersion ver = kstr "swaggerVersion" ver
+let genSwgVersion = kstr "swaggerVersion"
 
-let genAPIVersion ver = kstr "apiVersion" ver
+let genApiVersion = kstr "apiVersion"
 
-let genBasePath (_, URL(_, path)) = kstr "basePath" path
+let genResourcePath = kstr "resourcePath"
 
-let genMIME (_, MIME(_, p)) = genStr p
+let genBasePath = kstr "basePath"
 
-let genProducesList pl = karr "produces" (commaJoin pl)
+let genProducesList pl = karr "produces" (commaJoin (Parmap.parmap genStr (Parmap.L pl)))
 
-let genConsumesList cl = karr "consumes" (commaJoin cl)
+let genConsumesList cl = karr "consumes" (commaJoin (Parmap.parmap genStr (Parmap.L cl)))
 
-let genMIMEList mimeList =
-  let (produces, consumes) =
-    List.fold_left (fun (pl, cl) mime ->
-                      match mime with
-                          | (Produces(mime)) -> 
-                              ((genMIME mime) :: pl, cl)
-                          | (Consumes(mime)) -> 
-                              (pl, (genMIME mime) :: cl)) 
-                   ([], []) mimeList
-  in
-  let producesList = genProducesList produces
-  and consumesList = genConsumesList consumes in
-    commaJoin [producesList; consumesList]
+let genPath = kstr "path" 
 
-let genResourcePath (URL(_, path)) = kstr "resourcePath" path
+let genNickname = kstr "nickname"
 
-let genPath (URL(_, path)) = kstr "path" path 
-
-let genParameters (param) = kstr "parameters" param
+let genParameters ps = karr "parameters" (commaJoin ps)
   
-let genResponses (rep) = karr "responses" rep
+let genResponses rs = karr "responseMessages" (commaJoin rs)
 
-let genHttpMethod (_, httpMethod) =
+let genSummary = kstr "summary" 
+
+let genNotes = kstr "notes"
+
+let genDesc = kstr "description"
+
+let genHttpMethod httpMethod =
   let m = match httpMethod with
     | GET   (_) -> "GET"
     | POST  (_) -> "POST"
@@ -179,13 +171,9 @@ let genHttpMethod (_, httpMethod) =
     kstr "method" m
 ;;
 
-let genReturnType (_, returnType) = genTyp ~is_return:true returnType
+let genReturnType returnType = genTyp ~is_return:true returnType
 
-let genSummary (_, (Desc (_, summry))) = kstr "summary" summry
-
-let genNotes (_, (Desc (_, notes))) = kstr "notes" notes
-
-let genResponseMsg (_, (StatusCode(_, status)), model, (Desc(_, desc))) =
+let genResponse (_, (StatusCode(_, status)), model, (Desc(_, desc))) =
   let msg = [(kval "code" (string_of_int status)); (kstr "message" desc)] in
   let (msg, model) = (match model with
                           | None -> (msg, None)
@@ -202,10 +190,10 @@ let genResponseMsg (_, (StatusCode(_, status)), model, (Desc(_, desc))) =
 let genParamTyp typ = 
   let t = (match typ with
     | PATH(_) -> "path"   
-      | BODY(_) -> "body"
-      | QUERY(_) -> "query"  
-      | HEADER(_) -> "header" 
-      | FORM(_) -> "form")
+    | BODY(_) -> "body"
+    | QUERY(_) -> "query"  
+    | HEADER(_) -> "header" 
+    | FORM(_) -> "form")
   in
     kstr "paramType" t
 ;;
@@ -218,9 +206,7 @@ let genRequired required =
     kval "required" r
 ;;  
 
-let genDesc (Desc(_, desc)) = kstr "description" desc
-
-let genParam (_, varDef, paramTyp, desc) =
+let genParameter (_, varDef, paramTyp, Desc(_, desc)) =
   let paramTypStr = genParamTyp paramTyp
   and desc = genDesc desc
   and VarDef (_, Identifier(_, name), typ, required) = varDef in
@@ -231,75 +217,51 @@ let genParam (_, varDef, paramTyp, desc) =
       (commaJoin [paramName; paramTypStr; desc; requiredStr; typStr]), model)
 ;;
 
-let genAPIProp (modelSet, propHtbl) = function
-  | Method (httpMethod) ->
-    let httpMethod = genHttpMethod httpMethod in
-    let () = Hashtbl.add propHtbl "propList" httpMethod in
-      (modelSet, propHtbl)
-  | Return (return) ->
-    let (return, model) = genReturnType return in
-    let modelSet = addToModelSet modelSet model
-    and () = Hashtbl.add propHtbl "propList" return in
-      (modelSet, propHtbl)
-  | Summary (s) ->
-    let summary = genSummary s in
-    let () = Hashtbl.add propHtbl "propList" summary in
-      (modelSet, propHtbl)
-  | Notes (n) ->
-    let notes = genNotes n in
-    let () = Hashtbl.add propHtbl "propList" notes in
-      (modelSet, propHtbl)
-  | ResponseMsg (r) ->
-    let (response, model) = genResponseMsg r in
-    let modelSet = addToModelSet modelSet model
-    and () = Hashtbl.add propHtbl "response" response in
-      (modelSet, propHtbl)
-  | ParamDef (p) ->
-    let (param, model) = genParam p in
-    let modelSet = addToModelSet modelSet model
-    and () = Hashtbl.add propHtbl "param" param in
-      (modelSet, propHtbl)
-  | LocalMIME (Produces(p)) ->
-    let produces = genMIME p in
-    let () = Hashtbl.add propHtbl "produces" produces in
-      (modelSet, propHtbl)
-  | LocalMIME (Consumes(c)) ->
-    let consumes = genMIME c in
-    let () = Hashtbl.add propHtbl "consumes" consumes in
-      (modelSet, propHtbl)
+let genOperation operation =
+  let nickname = genNickname (Som.nickname operation)
+  and notes = genNotes (Som.notes operation)
+  and summary = genSummary (Som.summary operation)
+  and httpMethod = genHttpMethod (Som.httpMethod operation)
+  and produces = genProducesList (Som.localProduces operation)
+  and consumes = genConsumesList (Som.localConsumes operation)
+  and (params, paramModels) = 
+    List.split (Parmap.parmap genParameter (Parmap.L (Som.parameters operation))) 
+  and (responses, responseModels) =
+    List.split (Parmap.parmap genResponse (Parmap.L (Som.responses operation)))
+  and (return, returnModel) = genReturnType (Som.returnType operation) in
+  let addModel modelSet = (function
+    | None -> modelSet
+    | Some m -> StringSet.add m modelSet) in
+  let parameters = genParameters params
+  and responses = genResponses responses in
+  let models =
+    addModel
+      (StringSet.union
+        (List.fold_left addModel StringSet.empty paramModels)
+        (List.fold_left addModel StringSet.empty responseModels))
+      returnModel
+  and operation = 
+    genObject
+      (commaJoin [nickname; notes; summary; httpMethod; return; produces; consumes;
+                  parameters; responses])
+  in
+    operation, models
 ;;
 
-let genOperation (OperationDef (_, Identifier(_, name), props)) =
-  let (models, propHtbl) = 
-    List.fold_left genAPIProp (StringSet.empty, Hashtbl.create 5) props
-  in 
-  let nickname = kstr "nickname" name 
-  and params = 
-    karr "parameters" (commaJoin (Hashtbl.find_all propHtbl "param"))
-  and responses = 
-    karr "responseMessages" (commaJoin (Hashtbl.find_all propHtbl "response"))
-  and propls = commaJoin (Hashtbl.find_all propHtbl "propList")
-  and produces = genProducesList (Hashtbl.find_all propHtbl "produces")
-  and consumes = genConsumesList (Hashtbl.find_all propHtbl "consumes") in
-    genObject (commaJoin [nickname; propls; produces; 
-                          consumes; params; responses;]),
-    models
-;;
-
-(* val genApi : Ast.apiDef -> (string * StringSet.t) *)
-let genApi (APIDef (_, (URL(_, url)), operations)) = 
+(* val genApi : Som.api -> (string * StringSet.t) *)
+let genApi api  = 
+  let path = genPath (Som.path api) in
   let (opertionList, modelSetList) = 
-    List.split (Parmap.parmap genOperation (Parmap.L operations)) 
+    List.split (Parmap.parmap genOperation (Parmap.L (Som.operations api))) 
   in
   let modelSet = List.fold_left StringSet.union StringSet.empty modelSetList
-  and operations = karr "operations" (commaJoin opertionList)
-  and path = kstr "path" url in
+  and operations = karr "operations" (commaJoin opertionList)in
     (genObject (commaJoin [path; operations]), modelSet)
 ;;
 
-let genModelId id = kstr "id" id
+let genModelId = kstr "id"
 
-let genModelProp (PropertyDef (_, varDef, desc)) = 
+let genModelProp (PropertyDef (_, varDef, (Desc(_, desc)))) = 
   let VarDef (_, Identifier(_, id), swgtype, required) = varDef in
   let (typ, submodel) = genTyp swgtype
   and desc = genDesc desc 
@@ -380,35 +342,36 @@ let rec genModels env ?allmodels:(allModels = StringSet.empty) modelSet =
         modelList @ models
 ;;
 
-let genResource env apiVersion swgVersion
-                path (ResourceDef (_, rpath, desc, resourceProps, apiDefs)) 
-                (resourceDescList, resourceList) =
-  let (apiList, modelSetList) = List.split (Parmap.parmap genApi (Parmap.L apiDefs)) in
-  let modelSet = List.fold_left StringSet.union StringSet.empty modelSetList in
+
+let genResource env apiVersion swgVersion som =
+  let path = (Som.resourcePath som) in
+  let basePath     = genBasePath (Som.basePath som)
+  and resourcePath = genResourcePath path
+  and produces     = genProducesList (Som.globalProduces som)
+  and consumes     = genConsumesList (Som.globalConsumes som)
+  and resrcDclPath = genPath path 
+  and resrcDclDesc = genDesc (Som.resourceDesc som) in
+  let (apiList, modelSetList) = List.split (Parmap.parmap genApi (Parmap.L (Som.apis som))) in
+  let modelSet = Parmap.parfold StringSet.union (Parmap.L modelSetList) StringSet.empty StringSet.union in
   let modelList = genModels env modelSet in
-  let ResourceProps (BasePath(basePath), mimeList) = resourceProps in
   let apis = karr "apis" (commaJoin apiList)
-  and models = kobj "models" (commaJoin modelList)
-  and basePath = genBasePath basePath
-  and mimeList = genMIMEList mimeList
-  and resourcePath = genResourcePath rpath in
-  let resource = 
+  and models = kobj "models" (commaJoin modelList) in
+  let resourceDef = 
     genObject (commaJoin 
                 [apiVersion; swgVersion; resourcePath;
-                 basePath; mimeList; apis; models])
+                 basePath; produces; consumes; apis; models])
+  and resourceDecl =
+    genObject (commaJoin [resrcDclPath; resrcDclDesc])
   in
-  let path_j = genPath rpath
-  and desc_j = genDesc desc in
-  let resourceDesc = genObject (commaJoin [path_j; desc_j]) in
-    resourceDesc :: resourceDescList, (path, resource) :: resourceList 
-;;
+    resourceDecl, (path, resourceDef)
 
 let gen config env =
-  let apiVersion = genAPIVersion (Config.apiVersion config)
-  and swgVersion = genSWGVersion (Config.swaggerVersion config) in
+  let soms = getSoms env 
+  and apiVersion = genApiVersion (Config.apiVersion config)
+  and swgVersion = genSwgVersion (Config.swaggerVersion config) in
   let genResource = genResource env apiVersion swgVersion in
   let (resourceDescList, resourceList) = 
-    foldResource genResource env ([], []) 
+    List.split (Parmap.parmap genResource (Parmap.L soms)) 
   in
   let apis = karr "apis" (commaJoin resourceDescList) in
   let resourceDescList = 

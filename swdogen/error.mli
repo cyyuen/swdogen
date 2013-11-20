@@ -13,3 +13,5 @@ val add : err_list -> string -> err_list
 val is_empty : err_list -> bool
 
 val print_all : err_list -> unit
+
+val concat : err_list list -> err_list

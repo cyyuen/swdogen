@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 60f27705d714eff1eaa488efdb937647)
+# DO NOT EDIT (digest: 69ebdf6238473b764f5347feb42552b8)
 Codegen
 Parser
 Semantic
@@ -8,6 +8,7 @@ Config
 Error
 Deployer
 Discover
+Som
 Swgparser
 Swglexer
 Url

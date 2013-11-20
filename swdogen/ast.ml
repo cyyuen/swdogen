@@ -69,12 +69,16 @@ type statusCode = StatusCode of (tokenData * int)
 type mimeDef = Produces of (tokenData * mime)
              | Consumes of (tokenData * mime)
 
+type paramDef = (tokenData * varDef * paramType * desc)
+
+type response = (tokenData * statusCode * modelRef option * desc)
+
 type operationProp = Method      of (tokenData * httpMethod)
                    | Return      of (tokenData * swgtype)
                    | Summary     of (tokenData * desc)
                    | Notes       of (tokenData * desc)
-                   | ResponseMsg of (tokenData * statusCode * modelRef option * desc)
-                   | ParamDef    of (tokenData * varDef * paramType * desc)
+                   | ResponseMsg of response
+                   | ParamDef    of paramDef
                    | LocalMIME   of mimeDef
 
 type operationDef = OperationDef of (tokenData * identifier * operationProp list)

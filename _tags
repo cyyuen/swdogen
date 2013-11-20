@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: f582566275f10b16a2412b02684f5e7f)
+# DO NOT EDIT (digest: e8cc312b16dd3e35d3f252a58d10f201)
 # Ignore VCS directories, you can use the same kind of rule outside 
 # OASIS_START/STOP if you want to exclude directories that contains 
 # useless stuff for the build process
@@ -23,6 +23,7 @@
 "swdogen/error.cmx": for-pack(Swdogen)
 "swdogen/deployer.cmx": for-pack(Swdogen)
 "swdogen/discover.cmx": for-pack(Swdogen)
+"swdogen/som.cmx": for-pack(Swdogen)
 "swdogen/swgparser.cmx": for-pack(Swdogen)
 "swdogen/swglexer.cmx": for-pack(Swdogen)
 "swdogen/url.cmx": for-pack(Swdogen)

@@ -3,7 +3,7 @@
   "swaggerVersion": "1.2",
   "resourcePath": "/pet",
   "basePath": "http://petstore.swagger.wordnik.com/api",
-  "produces": [ "text/html", "text/plain", "application/xml" ],
+  "produces": [ "text/plain", "text/html", "application/xml" ],
   "consumes": [ "application/xml" ],
   "apis": [
     {
@@ -11,13 +11,13 @@
       "operations": [
         {
           "nickname": "findPetsByStatus",
-          "type": "array",
-          "uniqueItems": false,
-          "items": { "$ref": "Pet" },
           "notes":
             "Multiple status values can be provided with comma seperated strings",
           "summary": "Finds Pets by status",
           "method": "GET",
+          "type": "array",
+          "uniqueItems": false,
+          "items": { "$ref": "Pet" },
           "parameters": [
             {
               "name": "status",
@@ -29,9 +29,7 @@
               "enum": [ "available", "pending", "sold" ]
             }
           ],
-          "responseMessages": [
-            { "code": 400, "message": "Invalid status value" }
-          ]
+          "responses": [ { "code": 400, "message": "Invalid status value" } ]
         }
       ]
     },
@@ -40,10 +38,10 @@
       "operations": [
         {
           "nickname": "getPetById",
-          "type": "Pet",
           "notes": "Returns a pet based on ID",
           "summary": "Find pet by ID",
           "method": "GET",
+          "type": "Pet",
           "produces": [ "application/json" ],
           "consumes": [ "application/json" ],
           "parameters": [
@@ -58,7 +56,7 @@
               "maxinum": 100000.0
             }
           ],
-          "responseMessages": [
+          "responses": [
             {
               "responseModel": "Tag",
               "code": 404,
@@ -74,13 +72,13 @@
       "operations": [
         {
           "nickname": "findPetsByTags",
-          "type": "array",
-          "uniqueItems": false,
-          "items": { "$ref": "Pet" },
           "notes":
             "Muliple tags can be provided with comma seperated strings. Use tag1, tag2, tag3 for testing.",
           "summary": "Finds Pets by tags",
           "method": "GET",
+          "type": "array",
+          "uniqueItems": false,
+          "items": { "$ref": "Pet" },
           "parameters": [
             {
               "name": "tags",
@@ -90,9 +88,7 @@
               "type": "string"
             }
           ],
-          "responseMessages": [
-            { "code": 400, "message": "Invalid tag value" }
-          ]
+          "responses": [ { "code": 400, "message": "Invalid tag value" } ]
         }
       ]
     }
