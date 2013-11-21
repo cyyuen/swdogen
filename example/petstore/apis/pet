@@ -26,6 +26,7 @@
                 "Status values that need to be considered for filter",
               "required": true,
               "type": "string",
+              "defaultValue": "available",
               "enum": [ "available", "pending", "sold" ]
             }
           ],
@@ -147,6 +148,7 @@
         "status": {
           "description": "pet status in the store",
           "type": "string",
+          "defaultValue": "available",
           "enum": [ "available", "pending", "sold" ]
         }
       }

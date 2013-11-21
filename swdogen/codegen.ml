@@ -87,8 +87,10 @@ let genConstantLiteral = function
 ;;
 
 let genEnumList enumList =
-  let enum = Parmap.parmap genConstantLiteral (Parmap.L enumList) in
-    karr "enum" (commaJoin enum)
+  let enum = Parmap.parmap genConstantLiteral (Parmap.L enumList)
+  and fst::tail = enumList in
+    commaJoin [kval "defaultValue" (genConstantLiteral fst); 
+               karr "enum" (commaJoin enum)]
 ;;
 
 let genCompoundType = function
