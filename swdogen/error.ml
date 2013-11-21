@@ -13,7 +13,7 @@ let add (ErrList (err_list)) err = ErrList (err :: err_list)
 
 let print_all (ErrList (err_list)) = 
   let lt = List.rev err_list in
-    Parmap.pariter print_string (Parmap.L lt)
+    List.iter print_string lt
 ;; 
 
 let is_empty = (function
@@ -22,6 +22,6 @@ let is_empty = (function
 
 let concat errListList =
 	let errStrListList = 
-		Parmap.parmap (fun (ErrList (err_list)) -> err_list) (Parmap.L errListList)
+		List.map (fun (ErrList (err_list)) -> err_list) errListList
 	in
 		ErrList (List.concat errStrListList) 

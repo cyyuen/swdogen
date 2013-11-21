@@ -1,5 +1,4 @@
 open Ast
-open Parmap
 
 exception Semantic_error
 
@@ -287,12 +286,12 @@ let translateResourceDef (ResourceDef(_, URL(_, path), _, _, apis) as resourceDe
  * val translateSWGDocs : Ast.swgDoc -> (env, errList) list
  *)
 let translateSwgDocs = function
-  | ResourceDefs (rds) -> parmap translateResourceDef (L rds)
+  | ResourceDefs (rds) -> List.map translateResourceDef rds
   | ModelDefs (mds) -> 
     let env = createEnv ()
     and errList = Error.create () in
     let translateModelDef_init = translateModelDef (env, errList) in
-      parmap translateModelDef_init (L mds)
+      List.map translateModelDef_init mds
 ;;
 
 (**
@@ -300,7 +299,7 @@ let translateSwgDocs = function
  *)
 let translateFile = function
   | EmptyFile -> []
-  | SWGSourceFile (swgDocs) -> List.concat (parmap translateSwgDocs (L swgDocs))
+  | SWGSourceFile (swgDocs) -> List.concat (List.map translateSwgDocs swgDocs)
 ;;
 
 let concatEnv env env' =
@@ -326,11 +325,11 @@ let concatEnv env env' =
  *)
 let analysis fileLists = 
   let (envList, errListList) = 
-    List.split (List.concat (parmap translateFile (L fileLists))) 
+    List.split (List.concat (List.map translateFile fileLists)) 
   in
   let errList = Error.concat errListList in
     if Error.is_empty errList then
-      parfold concatEnv (L envList) (createEnv ()) concatEnv
+      List.fold_left concatEnv (createEnv ()) envList
     else
       let () = Error.print_all errList in
         raise Semantic_error

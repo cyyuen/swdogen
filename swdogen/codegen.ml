@@ -87,7 +87,7 @@ let genConstantLiteral = function
 ;;
 
 let genEnumList enumList =
-  let enum = Parmap.parmap genConstantLiteral (Parmap.L enumList)
+  let enum = List.map genConstantLiteral enumList
   and fst::tail = enumList in
     commaJoin [kval "defaultValue" (genConstantLiteral fst); 
                karr "enum" (commaJoin enum)]
@@ -144,9 +144,9 @@ let genResourcePath = kstr "resourcePath"
 
 let genBasePath = kstr "basePath"
 
-let genProducesList pl = karr "produces" (commaJoin (Parmap.parmap genStr (Parmap.L pl)))
+let genProducesList pl = karr "produces" (commaJoin (List.map genStr pl))
 
-let genConsumesList cl = karr "consumes" (commaJoin (Parmap.parmap genStr (Parmap.L cl)))
+let genConsumesList cl = karr "consumes" (commaJoin (List.map genStr cl))
 
 let genPath = kstr "path" 
 
@@ -237,9 +237,9 @@ let genOperation operation =
   and consumes = genConsumesList (Som.localConsumes operation)
   and authorization = genAuthorization (Som.localAuth operation)
   and (params, paramModels) = 
-    List.split (Parmap.parmap genParameter (Parmap.L (Som.parameters operation))) 
+    List.split (List.map genParameter (Som.parameters operation)) 
   and (responses, responseModels) =
-    List.split (Parmap.parmap genResponse (Parmap.L (Som.responses operation)))
+    List.split (List.map genResponse (Som.responses operation))
   and (return, returnModel) = genReturnType (Som.returnType operation) in
   let addModel modelSet = (function
     | None -> modelSet
@@ -264,7 +264,7 @@ let genOperation operation =
 let genApi api  = 
   let path = genPath (Som.path api) in
   let (opertionList, modelSetList) = 
-    List.split (Parmap.parmap genOperation (Parmap.L (Som.operations api))) 
+    List.split (List.map genOperation (Som.operations api))
   in
   let modelSet = List.fold_left StringSet.union StringSet.empty modelSetList
   and operations = karr "operations" (commaJoin opertionList)in
@@ -323,7 +323,7 @@ let genModel env model =
       and id = swgtype_toString (ModelType (modelRef)) in
         (id, props)
   ) in
-  let (propDefList, submodelList) = List.split (Parmap.parmap genModelProp (Parmap.L props)) in
+  let (propDefList, submodelList) = List.split (List.map genModelProp props) in
   let (propList, requiredList) = List.split propDefList in
   let props = kobj "properties" (commaJoin propList)
   and required = karr "required" (commaJoin requiredList)
@@ -343,7 +343,7 @@ let rec genModels env ?allmodels:(allModels = StringSet.empty) modelSet =
                     []
   in
   let genModel = genModel env in
-  let (modelList, submodelList) = List.split (Parmap.parmap genModel (Parmap.L modelList)) in
+  let (modelList, submodelList) = List.split (List.map genModel modelList) in
   let submodelSet = List.fold_left StringSet.union StringSet.empty submodelList
   and allModels = StringSet.union modelSet allModels in
   let newmodels = StringSet.diff submodelSet allModels in
@@ -364,8 +364,8 @@ let genResource env apiVersion swgVersion som =
   and authorization = genAuthorization (Som.globalAuth som)
   and resrcDclPath  = genPath path 
   and resrcDclDesc  = genDesc (Som.resourceDesc som) in
-  let (apiList, modelSetList) = List.split (Parmap.parmap genApi (Parmap.L (Som.apis som))) in
-  let modelSet = Parmap.parfold StringSet.union (Parmap.L modelSetList) StringSet.empty StringSet.union in
+  let (apiList, modelSetList) = List.split (List.map genApi (Som.apis som)) in
+  let modelSet = List.fold_left StringSet.union StringSet.empty modelSetList in
   let modelList = genModels env modelSet in
   let apis = karr "apis" (commaJoin apiList)
   and models = kobj "models" (commaJoin modelList) in
@@ -384,7 +384,7 @@ let gen config env =
   and swgVersion = genSwgVersion (Config.swaggerVersion config) in
   let genResource = genResource env apiVersion swgVersion in
   let (resourceDescList, resourceList) = 
-    List.split (Parmap.parmap genResource (Parmap.L soms)) 
+    List.split (List.map genResource soms) 
   in
   let apis = karr "apis" (commaJoin resourceDescList) in
   let resourceDescList = 

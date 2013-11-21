@@ -6,7 +6,7 @@ let parse filename =
     ast
 
 let parseFiles files =
-  let asts = Parmap.parmap parse (Parmap.L files) in
+  let asts = List.map parse files in
   let rec awc asts = function
     | [] -> asts
     | Ast.EmptyFile :: rl -> awc asts rl

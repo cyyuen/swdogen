@@ -28,7 +28,7 @@ Library swdogen
   InternalModules:      Swgparser, Swglexer, Url
   Pack:                 true
   CompiledObject:       Best
-  BuildDepends:         atdgen (>= 1.2.3), unix, parmap
+  BuildDepends:         atdgen (>= 1.2.3), unix
   BuildTools+:          ocamlyacc, ocamllex
   XMETADescription:     _oasis file functions
   Install:              false
