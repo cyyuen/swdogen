@@ -57,7 +57,8 @@ and swg_entry = parse
   | "@property"    { T_AT_PROPERTY     }
   | "@basePath"    { T_AT_BASEPATH     }
   | "@produces"    { T_AT_PRODUCES     } 
-  | "@consumes"    { T_AT_CONSUMES     } 
+  | "@consumes"    { T_AT_CONSUMES     }
+  | "@auth/apiKey" { T_AT_AUTH_APIKEY  }
   | "*/"           { token lexbuf;     }
   | "\n"           { new_line lexbuf; 
                      swg_entry lexbuf  }

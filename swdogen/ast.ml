@@ -69,6 +69,8 @@ type statusCode = StatusCode of (tokenData * int)
 type mimeDef = Produces of (tokenData * mime)
              | Consumes of (tokenData * mime)
 
+type authorization = AuthApiKey of (tokenData * paramType * identifier)
+
 type paramDef = (tokenData * varDef * paramType * desc)
 
 type response = (tokenData * statusCode * modelRef option * desc)
@@ -80,6 +82,7 @@ type operationProp = Method      of (tokenData * httpMethod)
                    | ResponseMsg of response
                    | ParamDef    of paramDef
                    | LocalMIME   of mimeDef
+                   | LocalAuth   of authorization
 
 type operationDef = OperationDef of (tokenData * identifier * operationProp list)
 
@@ -87,7 +90,7 @@ type apiDef = APIDef of (tokenData * url * operationDef list)
 
 type basePath = BasePath of (tokenData * url)
 
-type resourceProps = ResourceProps of (basePath * mimeDef list)
+type resourceProps = ResourceProps of (basePath * authorization option * mimeDef list)
 
 type resourceDef = ResourceDef of (tokenData * url * desc * resourceProps * apiDef list) 
 

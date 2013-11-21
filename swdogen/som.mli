@@ -10,6 +10,8 @@ val basePath : t -> string
 
 val resourceDesc : t -> string
 
+val globalAuth : t -> Ast.authorization option
+
 val globalProduces : t -> string list
 
 val globalConsumes : t -> string list
@@ -33,6 +35,8 @@ val httpMethod : operation -> Ast.httpMethod
 val parameters : operation -> Ast.paramDef list
 
 val responses : operation -> Ast.response list
+
+val localAuth : operation -> Ast.authorization option
 
 val localProduces : operation -> string list
 

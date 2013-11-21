@@ -25,6 +25,8 @@ class Pet
      * @response 400 "Invalid ID supplied"
      * @response 404 Tag "Pet not found"
      * @param petId:double[1.0 - 100000.0] option #path "ID of pet that needs to be fetched"
+     * @param auth:string #header "token used to authorization"
+     * @auth/apiKey #header auth
      */
     public function getPetById() {
 

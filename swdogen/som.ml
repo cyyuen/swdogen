@@ -12,6 +12,7 @@ type operation = {
   responses : (string, Ast.response) Hashtbl.t;
   localProduces : SS.t;
   localConsumes : SS.t;
+  localAuth : Ast.authorization option;
 }
 
 type api = {
@@ -23,6 +24,7 @@ type t = {
   resourcePath : string;
   basePath : string;
   resourceDesc : string;
+  globalAuth : Ast.authorization option;
   globalProduces : SS.t;
   globalConsumes : SS.t;
   apis : (string , api) Hashtbl.t;
@@ -37,6 +39,8 @@ let resourcePath t = t.resourcePath
 let basePath t = t.basePath
 
 let resourceDesc t = t.resourceDesc
+
+let globalAuth t = t.globalAuth 
 
 let globalProduces t = stringSetToList t.globalProduces
 
@@ -61,6 +65,8 @@ let httpMethod operation = operation.httpMethod
 let parameters operation = hashTblToList operation.parameters
 
 let responses operation = hashTblToList operation.responses
+
+let localAuth operation = operation.localAuth
 
 let localProduces operation = stringSetToList operation.localProduces
 
@@ -95,6 +101,7 @@ let addOperationProp operation = (function
   | Return (_, returnType)    -> { operation with returnType = returnType }
   | Summary(_, Desc(_, smmy)) -> { operation with summary = smmy }
   | Notes (_, Desc(_, notes)) -> { operation with notes = notes }
+  | LocalAuth (auth)          -> { operation with localAuth = Some auth }
   | ResponseMsg (response)    -> addResponse operation response
   | ParamDef (parameter)      -> addParameter operation parameter
   | LocalMIME (mime)          -> addLocalMime operation mime
@@ -116,6 +123,7 @@ let addOperation api (OperationDef (_, Identifier(_, id), props)) =
       httpMethod = defaultHttpMethod;
       parameters = Hashtbl.create 7;
       responses = Hashtbl.create 5;
+      localAuth = None;
       localProduces = SS.empty;
       localConsumes = SS.empty;
     } in
@@ -145,15 +153,16 @@ let addAPI resource (APIDef (_, (URL (_, url)), operations)) =
 
 let addAPIs = List.fold_left addAPI
 
-let addResourceProp resource (ResourceProps (BasePath(_, (URL (_, path))), mimes)) =
+let addResourceProp resource (ResourceProps (BasePath(_, (URL (_, path))), auth, mimes)) =
   let resource' = List.fold_left addGlobalMime resource mimes in
-    { resource' with basePath = path }
+    { resource' with basePath = path; globalAuth = auth }
 
 let of_resource (ResourceDef (_, URL(_, path), Desc(_, desc), prop, apis)) =
   let resource = {
     resourcePath = path;
     resourceDesc = desc;
     basePath = "";
+    globalAuth = None;
     globalProduces = SS.empty;
     globalConsumes = SS.empty;
     apis = Hashtbl.create (List.length apis)   

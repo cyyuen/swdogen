@@ -359,6 +359,7 @@ let analysisOperationProperty paramsTbl (env, errList, propTbl) = function
   | Notes (notes) -> analysisNotes (env, errList, propTbl) notes
   | Method (methd) -> analysisMethod (env, errList, propTbl) methd
   | LocalMIME (mime) -> analysisMimes (env, errList, propTbl) mime
+  | LocalAuth (auth) -> (env, errList, propTbl)
 ;;
 
 let analysisOperation paramsTbl (env, errList) operation =

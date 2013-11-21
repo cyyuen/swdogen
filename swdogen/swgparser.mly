@@ -36,7 +36,7 @@ let makeTokenData () =
 /* TODO: namespace
 %token T_AT_NAMESPACE
 */
-%token T_AT_RESOURCE T_AT_DESC T_AT_OPERATION T_AT_BASEPATH
+%token T_AT_RESOURCE T_AT_DESC T_AT_OPERATION T_AT_BASEPATH T_AT_AUTH_APIKEY
 %token T_AT_API T_AT_SUMMARY T_AT_RETURN T_AT_RESPONSE T_AT_NOTES T_AT_METHOD
 %token T_AT_PARAM
 %token T_AT_MODEL T_AT_PROPERTY
@@ -157,15 +157,19 @@ mime_def_list:
   /* empty */                                                    { [] }
   | mime_def mime_def_list                                       { $1 :: $2 }
 ;
+authorization:
+  T_AT_AUTH_APIKEY param_type identifier                         { AuthApiKey (makeTokenData(), $2, $3) }
+; 
 operation_property:
-    T_AT_METHOD    http_method                                   { (Method      (makeTokenData(), $2)) }
-  | T_AT_RETURN    swg_type                                      { (Return      (makeTokenData(), $2)) }
-  | T_AT_SUMMARY   desc                                          { (Summary     (makeTokenData(), $2)) }
-  | T_AT_NOTES     desc                                          { (Notes       (makeTokenData(), $2)) }
-  | T_AT_RESPONSE  staus_code  desc                              { (ResponseMsg (makeTokenData(), $2, None, $3)) }
-  | T_AT_RESPONSE  staus_code  model_ref  desc                   { (ResponseMsg (makeTokenData(), $2, (Some $3), $4)) }
-  | T_AT_PARAM     var_def     param_type desc                   { (ParamDef    (makeTokenData(), $2, $3, $4)) }
-  | mime_def                                                     { (LocalMIME   ($1)) }
+    T_AT_METHOD    http_method                                   { Method      (makeTokenData(), $2) }
+  | T_AT_RETURN    swg_type                                      { Return      (makeTokenData(), $2) }
+  | T_AT_SUMMARY   desc                                          { Summary     (makeTokenData(), $2) }
+  | T_AT_NOTES     desc                                          { Notes       (makeTokenData(), $2) }
+  | T_AT_RESPONSE  staus_code  desc                              { ResponseMsg (makeTokenData(), $2, None, $3) }
+  | T_AT_RESPONSE  staus_code  model_ref  desc                   { ResponseMsg (makeTokenData(), $2, (Some $3), $4) }
+  | T_AT_PARAM     var_def     param_type desc                   { ParamDef    (makeTokenData(), $2, $3, $4) }
+  | mime_def                                                     { LocalMIME   ($1) }
+  | authorization                                                { LocalAuth   ($1) }
 ;
 operation_property_list:
   /* empty */                                                    { [] }
@@ -203,7 +207,8 @@ basePath:
   T_AT_BASEPATH url                                              { (BasePath (makeTokenData(), $2)) }
 ;
 resource_properties:
-  basePath mime_def_list                                         { (ResourceProps($1, $2)) }
+    basePath mime_def_list                                       { (ResourceProps($1, None, $2)) }
+  | basePath authorization mime_def_list                         { (ResourceProps($1, Some $2, $3)) }
 ;
 resource_def:
    T_AT_RESOURCE url desc resource_properties api_def_list       { (ResourceDef (makeTokenData(), $2, $3, $4, $5)) }

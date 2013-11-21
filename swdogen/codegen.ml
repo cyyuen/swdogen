@@ -189,16 +189,25 @@ let genResponse (_, (StatusCode(_, status)), model, (Desc(_, desc))) =
     (genObject (commaJoin msg), model)
 ;;
 
-let genParamTyp typ = 
-  let t = (match typ with
-    | PATH(_) -> "path"   
-    | BODY(_) -> "body"
-    | QUERY(_) -> "query"  
-    | HEADER(_) -> "header" 
-    | FORM(_) -> "form")
-  in
-    kstr "paramType" t
+let genParamTypLiteral = (function
+  | PATH(_) -> "path"   
+  | BODY(_) -> "body"
+  | QUERY(_) -> "query"  
+  | HEADER(_) -> "header" 
+  | FORM(_) -> "form")
 ;;
+
+let genParamTyp typ = 
+  kstr "paramType" (genParamTypLiteral typ)
+;;
+
+let genAuthorization = (function
+  | None -> ""
+  | Some (AuthApiKey (_, paramType, Identifier(_, id))) ->
+    let typ = kstr "type" id
+    and passAs = kstr "passAs" (genParamTypLiteral paramType) in 
+    let apiKey = kobj "apiKey" (commaJoin [typ; passAs]) in
+      kobj "authorizations" apiKey)
 
 let genRequired required =
   let r = (match required with
@@ -226,6 +235,7 @@ let genOperation operation =
   and httpMethod = genHttpMethod (Som.httpMethod operation)
   and produces = genProducesList (Som.localProduces operation)
   and consumes = genConsumesList (Som.localConsumes operation)
+  and authorization = genAuthorization (Som.localAuth operation)
   and (params, paramModels) = 
     List.split (Parmap.parmap genParameter (Parmap.L (Som.parameters operation))) 
   and (responses, responseModels) =
@@ -244,8 +254,8 @@ let genOperation operation =
       returnModel
   and operation = 
     genObject
-      (commaJoin [nickname; notes; summary; httpMethod; return; produces; consumes;
-                  parameters; responses])
+      (commaJoin [nickname; notes; summary; httpMethod; return; produces; 
+                  consumes; authorization; parameters; responses])
   in
     operation, models
 ;;
@@ -347,12 +357,13 @@ let rec genModels env ?allmodels:(allModels = StringSet.empty) modelSet =
 
 let genResource env apiVersion swgVersion som =
   let path = (Som.resourcePath som) in
-  let basePath     = genBasePath (Som.basePath som)
-  and resourcePath = genResourcePath path
-  and produces     = genProducesList (Som.globalProduces som)
-  and consumes     = genConsumesList (Som.globalConsumes som)
-  and resrcDclPath = genPath path 
-  and resrcDclDesc = genDesc (Som.resourceDesc som) in
+  let basePath      = genBasePath (Som.basePath som)
+  and resourcePath  = genResourcePath path
+  and produces      = genProducesList (Som.globalProduces som)
+  and consumes      = genConsumesList (Som.globalConsumes som)
+  and authorization = genAuthorization (Som.globalAuth som)
+  and resrcDclPath  = genPath path 
+  and resrcDclDesc  = genDesc (Som.resourceDesc som) in
   let (apiList, modelSetList) = List.split (Parmap.parmap genApi (Parmap.L (Som.apis som))) in
   let modelSet = Parmap.parfold StringSet.union (Parmap.L modelSetList) StringSet.empty StringSet.union in
   let modelList = genModels env modelSet in
@@ -360,8 +371,8 @@ let genResource env apiVersion swgVersion som =
   and models = kobj "models" (commaJoin modelList) in
   let resourceDef = 
     genObject (commaJoin 
-                [apiVersion; swgVersion; resourcePath;
-                 basePath; produces; consumes; apis; models])
+                [apiVersion; swgVersion; resourcePath; basePath; 
+                 produces; consumes; authorization; apis; models])
   and resourceDecl =
     genObject (commaJoin [resrcDclPath; resrcDclDesc])
   in
