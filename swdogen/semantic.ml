@@ -189,50 +189,33 @@ let operationCheckSet propTbl pos propName
 ;;
 
 (*********************
-    Analysis
+    translate
  *********************)
-let rec analysisProperty (env, errList, propTbl) 
+let rec translateProperty (env, errList) 
                      (PropertyDef (pos, VarDef(_, Identifier(_, id), t, _), _)) =
-  let setter = PropTbl.set_multiple_prop "property" id
-  and msgGener = PropTbl.multiple_redefined_msg "property" id in
-  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
-  let (env', errList'') = analysisSWGTyp (env, errList') t in
-    (env', errList'', propTbl)
+  translateSWGTyp (env, errList) t
+  
+and translateArgument (env, errList) (VarDef (pos, Identifier(_, id), t, _)) =
+  translateSWGTyp (env, errList) t
 
-and analysisArgument (env, errList, propTbl)
-                     (VarDef (pos, Identifier(_, id), t, _)) =
-  let setter = PropTbl.set_multiple_prop "property" id
-  and msgGener = PropTbl.multiple_redefined_msg "property" id in
-  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
-  let (env', errList'') = analysisSWGTyp (env, errList') t in
-    (env', errList'', propTbl)
-
-and analysisModelDef (env, errList) ((_, _, props) as modelDef) =
+and translateModelDef (env, errList) ((_, _, props) as modelDef) =
   let model = ModelDef modelDef in
   let id = swgtype_toString (ModelType (model)) in
-  let env' = addModel env id model
-  and propTbl = PropTbl.init 0 1 in
-  let (env'', errList', _) =
-    List.fold_left analysisProperty (env', errList, propTbl) props
-  in
-    (env'', errList')
+  let env' = addModel env id model in
+    List.fold_left translateProperty (env', errList) props
 
-and analysisModelRef (env, errList) ((_, _, args) as modelRef) =
+and translateModelRef (env, errList) ((_, _, args) as modelRef) =
   let model = ModelRef modelRef in
   let id = swgtype_toString (ModelType (model)) in
-  let env' = addModel env id model
-  and propTbl = PropTbl.init 0 1 in
-  let (env'', errList', _) =
-    List.fold_left analysisArgument (env', errList, propTbl) args
-  in
-    (env'', errList')
+  let env' = addModel env id model in
+    List.fold_left translateArgument (env', errList) args
+  
+and translateModel (env, errList) = function
+  | ModelDef(m) -> translateModelDef (env, errList) m
+  | ModelRef(m) -> translateModelRef (env, errList) m
 
-and analysisModel (env, errList) = function
-  | ModelDef(m) -> analysisModelDef (env, errList) m
-  | ModelRef(m) -> analysisModelRef (env, errList) m
-
-and analysisSWGTyp (env, errList) = function
-  | ModelType (m) -> analysisModel (env, errList) m
+and translateSWGTyp (env, errList) = function
+  | ModelType (m) -> translateModel (env, errList) m
   | ArrayType(SWGSet  (pos, ArrayType(_)))
   | ArrayType(SWGArray(pos, ArrayType(_))) ->
     let errMsg = "nested array/set is not supported." in
@@ -240,7 +223,7 @@ and analysisSWGTyp (env, errList) = function
       (env, errList')
   | ArrayType(SWGSet   (pos, ModelType(m)))
   | ArrayType(SWGArray (pos, ModelType(m))) ->
-    analysisModel (env, errList) m
+    translateModel (env, errList) m
   | _ -> (env, errList)
 ;;
 
@@ -250,196 +233,74 @@ let checkForPrimitive errList pos = function
   | _ -> err_create_and_add pos "primitive type required." errList
 ;;
 
-let checkForURLParameter errList pos paramsTbl param =
-  if Hashtbl.mem paramsTbl param then
-    let defined = Hashtbl.find paramsTbl param in
-    if defined then
-      let errMsg = Printf.sprintf ("parameter %s redefined.") param in
-        err_create_and_add pos errMsg errList
-    else
-      let () = Hashtbl.replace paramsTbl param true in
-        errList  
-  else
-    let errMsg = Printf.sprintf ("the parameter %s not matched to path.") param
-    in
-      err_create_and_add pos errMsg errList
-;;
-
-let analysisParam paramsTbl (env, errList, propTbl) param =
-  let (pos, varDef, paramType, _) = param in
+let translateParam (env, errList) (pos, varDef, paramType, _) =
   let VarDef (tok', Identifier(_, id), swgtype, required) = varDef in
-  let setter = PropTbl.set_multiple_prop "parameter" id
-  and msgGener = PropTbl.multiple_redefined_msg "parameter" id in
-  let propertyChecker = propertySetAndCheck propTbl pos setter msgGener in
-  let primitiveChecker = 
-    (fun errList -> checkForPrimitive errList pos swgtype)
-  in 
-  let (env', errList', checkerList) =
     (match paramType with
-         | PATH(pos) ->
-           let urlparamChecker =
-             (fun errList -> checkForURLParameter errList pos paramsTbl id)
-           in
-             (env, errList, [primitiveChecker; urlparamChecker])
-         | QUERY(pos) | HEADER(pos) ->
-           (env, errList, [primitiveChecker])
+         | PATH(pos) | QUERY(pos) | HEADER(pos) ->
+            (env, checkForPrimitive errList pos swgtype)
          | _ ->
-           let (env', errList') = analysisSWGTyp (env, errList) swgtype in
-             (env', errList', []))
-  in
-  let errList'' = applyCheck errList' (propertyChecker :: checkerList) in
-    (env', errList'', propTbl)
+           translateSWGTyp (env, errList) swgtype)
 ;;
 
-
-let analysisResponse (env, errList, propTbl) 
-                     (pos, StatusCode(_, code), modelRef, _) =
-  let code_s = string_of_int code in
-  let setter = PropTbl.set_multiple_prop "response" code_s
-  and msgGener = PropTbl.multiple_redefined_msg "response" code_s in
-  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
-  let (env', errList'') = 
-    match modelRef with
-    | Some modelRef -> analysisModelRef (env, errList') modelRef
-    | None -> (env, errList')
-  in
-    (env', errList'', propTbl)
+let translateResponse (env, errList) (pos, StatusCode(_, code), modelRef, _) =
+  (match modelRef with
+       | Some modelRef -> translateModelRef (env, errList) modelRef
+       | None -> (env, errList))
 ;;
 
-let analysisMimes (env, errList, propTbl) mimeDef =
-  let (pos, setter, msgGener) = (
-    match mimeDef with
-        | Produces(pos, MIME(_, mime)) ->
-          (pos,
-           PropTbl.set_multiple_prop "produces" mime,
-           PropTbl.multiple_redefined_msg "produces" mime) 
-        | Consumes(pos, MIME(_, mime)) ->
-          (pos,
-           PropTbl.set_multiple_prop "consumes" mime,
-           PropTbl.multiple_redefined_msg "consumes" mime)
-  ) in
-  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
-    (env, errList', propTbl)
+let translateReturn (env, errList) (pos, swgtyp) =
+  translateSWGTyp (env, errList) swgtyp
 ;;
 
-let analysisReturn (env, errList, propTbl) (pos, swgtyp) =
-  let setter = PropTbl.set_singleton_prop "return"
-  and msgGener = PropTbl.singleton_redefined_msg "return" in
-  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
-  let (env', errList'') = analysisSWGTyp (env, errList') swgtyp in
-    (env', errList'', propTbl)
+let translateOperationProperty (env, errList) = function
+  | ParamDef (param) -> translateParam (env, errList) param
+  | Return (return) -> translateReturn (env, errList) return 
+  | ResponseMsg (response) -> translateResponse (env, errList) response
+  | _ -> (env, errList)
 ;;
 
-let analysisSummary (env, errList, propTbl) (pos, _) =
-  let setter = PropTbl.set_singleton_prop "summary"
-  and msgGener = PropTbl.singleton_redefined_msg "summary" in 
-  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
-    (env, errList', propTbl)
-;;
-
-let analysisNotes (env, errList, propTbl) (pos, _) =
-  let setter = PropTbl.set_singleton_prop "notes"
-  and msgGener = PropTbl.singleton_redefined_msg "notes" in 
-  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
-    (env, errList', propTbl)
-;;
-
-let analysisMethod (env, errList, propTbl) (pos, _) = 
-  let setter = PropTbl.set_singleton_prop "method"
-  and msgGener = PropTbl.singleton_redefined_msg "method" in 
-  let errList' = propertySetAndCheck propTbl pos setter msgGener errList in
-    (env, errList', propTbl)
-;;
-
-let analysisOperationProperty paramsTbl (env, errList, propTbl) = function
-  | ParamDef (param) -> analysisParam paramsTbl (env, errList, propTbl) param
-  | Return (return) -> analysisReturn (env, errList, propTbl) return 
-  | ResponseMsg (response) -> analysisResponse (env, errList, propTbl) response
-  | Summary (summary) -> analysisSummary (env, errList, propTbl) summary
-  | Notes (notes) -> analysisNotes (env, errList, propTbl) notes
-  | Method (methd) -> analysisMethod (env, errList, propTbl) methd
-  | LocalMIME (mime) -> analysisMimes (env, errList, propTbl) mime
-  | LocalAuth (auth) -> (env, errList, propTbl)
-;;
-
-let analysisOperation paramsTbl (env, errList) operation =
-  let (OperationDef (pos, apiName, properties)) = operation in
-  let analysisFun = analysisOperationProperty paramsTbl
-  and propTbl = PropTbl.init 4 3 in
-  let (env', errList', propTbl') =
-    List.fold_left analysisFun (env, errList, propTbl) properties
-  in
-  let operationCheckSet = operationCheckSet propTbl pos in
-  let methodChecker = 
-    operationCheckSet "HTTP method" (PropTbl.singleton_is_set "method")
-  and summaryChecker =
-    operationCheckSet "summary" (PropTbl.singleton_is_set "summary")
-  and notesChecker = 
-    operationCheckSet "notes" (PropTbl.singleton_is_set "notes")
-  and returnChecker = 
-    operationCheckSet "return" (PropTbl.singleton_is_set "return")
-  in
-  let checkerList = 
-    [methodChecker; summaryChecker; notesChecker; returnChecker] 
-  in
-    (env', (applyCheck errList' checkerList))
-;;
-
-let analysisApi (env, errList) api =
-  let (APIDef(pos, URL(_, url), operations)) = api in
-  let urlparams = Url.url_params url in
-  let createParamTbl tbl param = (
-    if Hashtbl.mem tbl param then tbl
-    else let () = Hashtbl.add tbl param false in tbl
-  ) in
-  let paramsTbl = List.fold_left createParamTbl
-                  (Hashtbl.create 10)
-                  urlparams
-  in
-  let analysisFun = analysisOperation paramsTbl in
-  let (env, errList) = List.fold_left analysisFun (env, errList) operations in 
-  let allParamDefined = Hashtbl.fold (fun k v d -> v && d)
-                                     paramsTbl
-                                     true
-  in 
-    if allParamDefined then (env, errList)
-    else 
-     let errMsg = Printf.sprintf ("api %s have undefined url parameter") url in
-     let errList' = err_create_and_add pos errMsg errList in
-       (env, errList')
+let translateOperation (env, errList) (OperationDef (pos, apiName, properties)) =
+  List.fold_left translateOperationProperty (env, errList) properties
 ;;
 
 (**
- * val analysisResourceDef : Ast.resourceDef -> (env, errList)
+ * val translateApi : (env * errList) -> Ast.apiDef -> (env * errList)
  *)
-let analysisResourceDef (ResourceDef(_, URL(_, path), _, _, apis) as resourceDef) =
+let translateApi (env, errList) (APIDef(pos, URL(_, url), operations)) =
+  List.fold_left translateOperation (env, errList) operations
+;;
+
+(**
+ * val translateResourceDef : Ast.resourceDef -> (env, errList)
+ *)
+let translateResourceDef (ResourceDef(_, URL(_, path), _, _, apis) as resourceDef) =
   let env = createEnv ()
   and errList = Error.create () in
   let env = addResource env path resourceDef in
   let (env', errList') = 
-    List.fold_left analysisApi (env, errList) apis
+    List.fold_left translateApi (env, errList) apis
   in
     (env', errList')
 ;;
 
 (**
- * val analysisSWGDocs : Ast.swgDoc -> (env, errList) list
+ * val translateSWGDocs : Ast.swgDoc -> (env, errList) list
  *)
-let analysisSwgDocs = function
-  | ResourceDefs (rds) -> parmap analysisResourceDef (L rds)
+let translateSwgDocs = function
+  | ResourceDefs (rds) -> parmap translateResourceDef (L rds)
   | ModelDefs (mds) -> 
     let env = createEnv ()
     and errList = Error.create () in
-    let analysisModelDef_init = analysisModelDef (env, errList) in
-      parmap analysisModelDef_init (L mds)
+    let translateModelDef_init = translateModelDef (env, errList) in
+      parmap translateModelDef_init (L mds)
 ;;
 
 (**
- * val analysisFile : Ast.sourceFile -> (env, errList) list
+ * val translateFile : Ast.sourceFile -> (env, errList) list
  *)
-let analysisFile = function
+let translateFile = function
   | EmptyFile -> []
-  | SWGSourceFile (swgDocs) -> List.concat (parmap analysisSwgDocs (L swgDocs))
+  | SWGSourceFile (swgDocs) -> List.concat (parmap translateSwgDocs (L swgDocs))
 ;;
 
 let concatEnv env env' =
@@ -461,11 +322,11 @@ let concatEnv env env' =
 ;;
 
 (**
- * 
+ * Translate all Ast.swgDoc into Som and Env first
  *)
 let analysis fileLists = 
   let (envList, errListList) = 
-    List.split (List.concat (parmap analysisFile (L fileLists))) 
+    List.split (List.concat (parmap translateFile (L fileLists))) 
   in
   let errList = Error.concat errListList in
     if Error.is_empty errList then
