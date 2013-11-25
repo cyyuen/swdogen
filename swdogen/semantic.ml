@@ -31,6 +31,8 @@ let getSoms env = Hashtbl.fold (fun _ elt lst -> elt :: lst) env.somBinding []
 
 let addSom env path som =
   if Hashtbl.mem env.somBinding path then
+    let () = print_endline "addSom" in
+    let () = print_endline path in
     let predefinedSom = Hashtbl.find env.somBinding path in
     let (som', msgpool) = Som.merge_som som predefinedSom in
     let () = Hashtbl.replace env.somBinding path som' in 
@@ -41,6 +43,8 @@ let addSom env path som =
 
 let addResource env path resource =
   if Hashtbl.mem env.somBinding path then
+    let () = print_endline "addResource" in
+    let () = print_endline path in
     let som = Hashtbl.find env.somBinding path in
     let (som', msgpool) = Som.merge_resource som resource in
     let () = Hashtbl.replace env.somBinding path som' in 
@@ -68,7 +72,7 @@ let addModel env modelId = function
   | ModelDef (m) -> addModelDef env modelId m
 ;;
 
-let emptyEnv = {
+let createEmptyEnv () = {
   somBinding       = Hashtbl.create 100;
   modelDefBinding  = Hashtbl.create 100;
   modelRefBinding  = Hashtbl.create 100;
@@ -168,7 +172,7 @@ let translateApi (env, msgpool) (APIDef(pos, URL(_, url), operations)) =
  * val translateResourceDef : Ast.resourceDef -> (env, msgpool)
  *)
 let translateResourceDef (ResourceDef(_, URL(_, path), _, _, apis) as resourceDef) =
-  let (env, msgpool) = addResource emptyEnv path resourceDef in
+  let (env, msgpool) = addResource (createEmptyEnv ()) path resourceDef in
     List.fold_left translateApi (env, msgpool) apis
 ;;
 
@@ -176,10 +180,11 @@ let translateResourceDef (ResourceDef(_, URL(_, path), _, _, apis) as resourceDe
  * val translateSWGDocs : Ast.swgDoc -> (env, msgpool) list
  *)
 let translateSwgDocs = function
-  | ResourceDefs (rds) -> List.map translateResourceDef rds
+  | ResourceDefs (rds) ->
+    List.map translateResourceDef rds
   | ModelDefs (mds) -> 
     let translateModelDef_init = 
-      translateModelDef (emptyEnv, Msgpool.empty) 
+      translateModelDef ((createEmptyEnv ()), Msgpool.empty) 
     in
       List.map translateModelDef_init mds
 ;;
@@ -189,7 +194,8 @@ let translateSwgDocs = function
  *)
 let translateFile = function
   | EmptyFile -> []
-  | SWGSourceFile (swgDocs) -> List.concat (List.map translateSwgDocs swgDocs)
+  | SWGSourceFile (swgDocs) ->
+     List.concat (List.map translateSwgDocs swgDocs)
 ;;
 
 let concatEnv (env', msgpool) env =
@@ -301,9 +307,9 @@ let analysis fileLists =
     List.split (List.concat (List.map translateFile fileLists)) 
   in
   let (env, msgpool) =  
-    List.fold_left concatEnv (emptyEnv, Msgpool.concat msgpoollst) envList
+    List.fold_left concatEnv ((createEmptyEnv ()), Msgpool.concat msgpoollst) envList
   in
-  let msgpool' = analysisEnv env in
+  let msgpool' = Msgpool.append msgpool (analysisEnv env) in
   let () = Msgpool.print_warnings msgpool' in
   if Msgpool.contains_error msgpool' then 
     let () = Msgpool.print_errors msgpool' in

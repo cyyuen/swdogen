@@ -55,7 +55,7 @@
               "name": "petId",
               "paramType": "path",
               "description": "ID of pet that needs to be fetched",
-              "required": false,
+              "required": true,
               "type": "number",
               "format": "double",
               "mininum": 1.0,

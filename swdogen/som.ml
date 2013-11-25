@@ -140,7 +140,6 @@ let addCommonMimeSetHasDefined prop (set1: MimeSet.t) (set2: MimeSet.t) =
     List.fold_left (fun msgpool (MIME(pos, mime)) ->
                       addPropHasDefined pos prop mime msgpool) Msgpool.empty commons
 
-
 (*****************
     Translate
  *****************)
@@ -224,12 +223,9 @@ let addOperationProp (operation, msgpool) = (function
 
 let addOperationProps = List.fold_left addOperationProp
 
-let addOperation (api, msgpool) (OperationDef (_, (Identifier(_, id) as identifier), props)) =
+let addOperation (api, msgpool) (OperationDef (pos, (Identifier(_, id) as identifier), props)) =
   if Hashtbl.mem api.operations id then
-    let operation = Hashtbl.find api.operations id in
-    let (operation', msgpool') = addOperationProps (operation,msgpool) props in
-    let () = Hashtbl.replace api.operations id operation' in
-      api, msgpool'
+      api, addPropValueOveride pos "operation" id msgpool 
   else
     let operation = {
       nickname = identifier;
@@ -313,9 +309,6 @@ let of_resource (ResourceDef (_, path, desc, prop, apis)) =
 
 let merge_resource resource (ResourceDef (_, _, _, prop, apis)) =
    addAPIs (addResourceProp (resource, Msgpool.empty) prop) apis
-
-let addPropValueOveride pos prop name msgpool =
-  addError pos (Printf.sprintf ("%s %s has defined. would be overrided.") prop name) msgpool
 
 let merge_api api api' = 
   let (operations, msgpool) =
