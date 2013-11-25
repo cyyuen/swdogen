@@ -87,10 +87,12 @@ let genConstantLiteral = function
 ;;
 
 let genEnumList enumList =
-  let enum = List.map genConstantLiteral enumList
-  and fst::tail = enumList in
-    commaJoin [kval "defaultValue" (genConstantLiteral fst); 
-               karr "enum" (commaJoin enum)]
+  let enum = List.map genConstantLiteral enumList in
+  match enumList with
+   | [] -> (* unreachable *) ""
+   | fst::tail ->  
+      commaJoin [kval "defaultValue" (genConstantLiteral fst); 
+                 karr "enum" (commaJoin enum)]
 ;;
 
 let genCompoundType = function
@@ -140,27 +142,35 @@ let genSwgVersion = kstr "swaggerVersion"
 
 let genApiVersion = kstr "apiVersion"
 
-let genResourcePath = kstr "resourcePath"
+let genResourcePath (URL (_, url)) = kstr "resourcePath" url
 
-let genBasePath = kstr "basePath"
+let genBasePath = function 
+  | Some (URL (_, url)) -> kstr "basePath" url
+  | None -> (*unreachable*) ""
 
-let genProducesList pl = karr "produces" (commaJoin (List.map genStr pl))
+let genMime (MIME (_, mime)) = genStr mime
 
-let genConsumesList cl = karr "consumes" (commaJoin (List.map genStr cl))
+let genProducesList pl = karr "produces" (commaJoin (List.map genMime pl))
 
-let genPath = kstr "path" 
+let genConsumesList cl = karr "consumes" (commaJoin (List.map genMime cl))
 
-let genNickname = kstr "nickname"
+let genPath (URL (_, url)) = kstr "path" url 
+
+let genNickname (Identifier(_, name)) = kstr "nickname" name
 
 let genParameters ps = karr "parameters" (commaJoin ps)
   
 let genResponses rs = karr "responseMessages" (commaJoin rs)
 
-let genSummary = kstr "summary" 
+let genSummary = function
+  | Some (Desc(_, desc)) -> kstr "summary" desc
+  | None -> ""
 
-let genNotes = kstr "notes"
+let genNotes = function 
+  | Some (Desc(_, desc)) -> kstr "notes" desc
+  | None -> ""
 
-let genDesc = kstr "description"
+let genDesc (Desc(_, desc)) = kstr "description" desc
 
 let genHttpMethod httpMethod =
   let m = match httpMethod with
@@ -217,7 +227,7 @@ let genRequired required =
     kval "required" r
 ;;  
 
-let genParameter (_, varDef, paramTyp, Desc(_, desc)) =
+let genParameter (_, varDef, paramTyp, desc) =
   let paramTypStr = genParamTyp paramTyp
   and desc = genDesc desc
   and VarDef (_, Identifier(_, name), typ, required) = varDef in
@@ -273,7 +283,7 @@ let genApi api  =
 
 let genModelId = kstr "id"
 
-let genModelProp (PropertyDef (_, varDef, (Desc(_, desc)))) = 
+let genModelProp (PropertyDef (_, varDef, desc)) = 
   let VarDef (_, Identifier(_, id), swgtype, required) = varDef in
   let (typ, submodel) = genTyp swgtype
   and desc = genDesc desc 
@@ -356,7 +366,7 @@ let rec genModels env ?allmodels:(allModels = StringSet.empty) modelSet =
 
 
 let genResource env apiVersion swgVersion som =
-  let path = (Som.resourcePath som) in
+  let URL(_, rpath) as path = (Som.resourcePath som) in
   let basePath      = genBasePath (Som.basePath som)
   and resourcePath  = genResourcePath path
   and produces      = genProducesList (Som.globalProduces som)
@@ -376,7 +386,7 @@ let genResource env apiVersion swgVersion som =
   and resourceDecl =
     genObject (commaJoin [resrcDclPath; resrcDclDesc])
   in
-    resourceDecl, (path, resourceDef)
+    resourceDecl, (rpath, resourceDef)
 
 let gen config env =
   let soms = getSoms env 

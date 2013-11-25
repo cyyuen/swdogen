@@ -3,7 +3,7 @@
   "swaggerVersion": "1.2",
   "resourcePath": "/pet",
   "basePath": "http://petstore.swagger.wordnik.com/api",
-  "produces": [ "text/plain", "text/html", "application/xml" ],
+  "produces": [ "application/xml", "text/html", "text/plain" ],
   "consumes": [ "application/xml" ],
   "apis": [
     {

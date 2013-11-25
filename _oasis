@@ -21,11 +21,11 @@ Library swdogen
                         Semantic, 
                         Ast, 
                         Config, 
-                        Error, 
+                        Msgpool, 
                         Deployer, 
                         Discover, 
                         Som
-  InternalModules:      Swgparser, Swglexer, Url
+  InternalModules:      Swgparser, Swglexer
   Pack:                 true
   CompiledObject:       Best
   BuildDepends:         atdgen (>= 1.2.3), unix

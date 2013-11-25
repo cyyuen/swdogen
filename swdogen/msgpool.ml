@@ -13,16 +13,16 @@ let empty = {
 }
 
 let add_warning pool fname lnum cnum msg =
-  { pool with = Warning (fname, lnum, cnum, msg) :: pool.warning_list }
+  { pool with warning_list = Warning (fname, lnum, cnum, msg) :: pool.warning_list }
 
 let add_error pool fname lnum cnum msg =
-  { pool with = Error (fname, lnum, cnum, msg) :: pool.error_list }
+  { pool with error_list = Error (fname, lnum, cnum, msg) :: pool.error_list }
 
 let contains_error pool = 
   0 = (List.length pool.error_list) 
 
 let print_msg msgtyp fname lnum cnum msg =
-  Printf.sprintf ("File %s, line %d, char %d:\n  [%s] %s") fname lnum cnum msgtyp msg
+  Printf.printf ("File %s, line %d, char %d:\n  [%s] %s") fname lnum cnum msgtyp msg
 
 let print_warning (Warning (fname, lnum, cnum, msg)) =
   print_msg "Warning" fname lnum cnum msg
@@ -43,9 +43,8 @@ let print_all pool =
 let concat poolList =
   List.fold_left 
     (fun pool pl -> 
-      { pool with 
-          error_list = pool.error_list @ pl.error_list; 
-          warning_list = pool.warning_list @ pool.warning_list
+      { error_list = pool.error_list @ pl.error_list; 
+        warning_list = pool.warning_list @ pool.warning_list
       })
     empty poolList
 
