@@ -56,7 +56,7 @@ Executable test
   BuildDepends:         oUnit (>= 2.0.0), swdogen
   
 Test test
-  Command:              $test
+  Command:              $test -swdogen $swdogen
   WorkingDirectory:     test
 
 SourceRepository master
