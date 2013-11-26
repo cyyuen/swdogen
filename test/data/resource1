@@ -1,0 +1,12 @@
+/**
+ * @resource /resource "operation about resource"
+ * @basePath http://www.foo.com
+ * @api /api
+ * @operation operation
+ * @summary "summary"
+ * @method GET
+ * @notes "notes"
+ * @param param:string #query "this is a bar"
+ * @return void
+ * @response 400 "response"
+ */
