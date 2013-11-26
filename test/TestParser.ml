@@ -25,13 +25,36 @@
  *)
 
 open OUnit2;;
+open Swdogen.Ast;;
 
 (* Name the test cases and group them together *)
 module SP = Swdogen.Parser;;
 
+let emptyFile1 = ("emptyFile1", "")
+and emptyFile2 = ("emptyFile2", "/** */")
+and emptyFile3 = ("emptyFile3", "/**")
+and expectedAst_emptyFile = EmptyFile
+;;
+
+let createParserTest expected content =
+  (fun txt -> 
+    let (fname, out) = bracket_tmpfile txt in
+    let () = output_string out content in
+    let () = close_out out in
+      assert_equal expected (SP.parse fname))
+
+let test_emptyFiles =
+  let tests = 
+    List.map 
+      (fun (tst, content) -> 
+        ("test_" ^ tst) >:: (createParserTest expectedAst_emptyFile content)
+      )
+      [emptyFile1; emptyFile2; emptyFile3]
+  in
+    "test_emptyFiles" >::: tests
+;;
+
 let tests =
 "test_parser">:::
- ["test1">::
- (fun test_ctxt -> 
- 	assert_equal 1 1)]
+ [test_emptyFiles]
 ;;

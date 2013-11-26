@@ -39,8 +39,8 @@ rule token = parse
   "/**"            { swg_entry lexbuf  }
   | "\n"           { new_line lexbuf;
                      token lexbuf      }
-  | _              { token lexbuf      }
   | eof            { EOF               }
+  | _              { token lexbuf      }
 
 and swg_entry = parse
   | "@resource"    { T_AT_RESOURCE     }
@@ -62,6 +62,7 @@ and swg_entry = parse
   | "*/"           { token lexbuf;     }
   | "\n"           { new_line lexbuf; 
                      swg_entry lexbuf  }
+  | eof            { EOF               }
   | _              { swg_entry lexbuf  }
 
 and swg_body = parse
@@ -125,6 +126,7 @@ and swg_body = parse
            { T_URL (lxm) }
   | mine as lxm
            { T_MIME (lxm) }
+  | eof    { EOF          }
   | _      { swg_body lexbuf }
 
 {
