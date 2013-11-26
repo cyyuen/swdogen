@@ -29,6 +29,7 @@ open OUnit2;;
 let suite =
 "suite">:::
  [ TestParser.tests;
+   TestSom.tests;
  (* TestCodegen.tests;
   
   TestSemantic.tests;
