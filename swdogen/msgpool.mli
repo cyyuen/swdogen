@@ -28,6 +28,8 @@ type t
 
 val empty : t
 
+val is_empty : t -> bool
+
 val add_warning : t -> string -> int -> int -> string -> t
 
 val add_error : t -> string -> int -> int -> string -> t

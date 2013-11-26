@@ -48,6 +48,8 @@ let empty = {
   warning_set = MsgSet.empty;
 }
 
+let is_empty t = (MsgSet.is_empty t.error_set) && (MsgSet.is_empty t.warning_set)
+
 let add_warning pool fname lnum cnum msg = 
 { pool with
   warning_set = MsgSet.add (fname, lnum, cnum, msg) pool.warning_set
