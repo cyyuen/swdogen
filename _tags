@@ -45,3 +45,5 @@
 <test/*.ml{,i}>: pkg_atdgen
 <test/*.ml{,i}>: pkg_unix
 # OASIS_STOP
+"swdogen/config_t.cmx": for-pack(Swdogen)
+"swdogen/config_j.cmx": for-pack(Swdogen)

@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: 81d92eff0d1ee3091ab168d32962cde2)
+# DO NOT EDIT (digest: 9cd42e5f8469225a0b3e56baac92534d)
 Codegen
 Parser
 Semantic
@@ -11,4 +11,6 @@ Discover
 Som
 Swgparser
 Swglexer
+Config_t
+Config_j
 # OASIS_STOP
