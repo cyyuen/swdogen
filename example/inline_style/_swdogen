@@ -4,6 +4,6 @@
   "discoverPaths" : [
     "."
   ],
-  "excludedPaths":[],
+  "ignores":[],
   "compact" : false
 }

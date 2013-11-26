@@ -414,10 +414,10 @@ let genResource env apiVersion swgVersion som =
   in
     resourceDecl, (rpath, resourceDef)
 
-let gen config env =
+let gen apiVersion swgVersion env =
   let soms = getSoms env 
-  and apiVersion = genApiVersion (Config.apiVersion config)
-  and swgVersion = genSwgVersion (Config.swaggerVersion config) in
+  and apiVersion = genApiVersion apiVersion
+  and swgVersion = genSwgVersion swgVersion in
   let genResource = genResource env apiVersion swgVersion in
   let (resourceDescList, resourceList) = 
     List.split (List.map genResource soms) 

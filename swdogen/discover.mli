@@ -24,4 +24,6 @@
  *
  *)
 
-val discover : Config.t -> string list
+val discover : string list (* directories to discover *)
+               -> string list (* ignores *)
+               -> string list (* filenames it found *)

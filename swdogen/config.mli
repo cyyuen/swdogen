@@ -38,6 +38,6 @@ val compact : t -> bool
 
 val discoverPaths : t -> string list
 
-val excludedPaths : t -> string list
+val ignores : t -> string list
 
 exception Configuration_error of string

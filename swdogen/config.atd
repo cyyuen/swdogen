@@ -6,5 +6,5 @@ type t = {
   compact : bool;
   (* project *)
   discoverPaths : string list;
-  excludedPaths : string list;
+  ignores : string list;
 }

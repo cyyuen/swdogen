@@ -24,5 +24,8 @@
  *
  *)
 
-val gen : Config.t -> Semantic.env -> string (* resource desc *) 
-                                      * (string * string) list (* resource list *)
+val gen : string -> (* api version *) 
+          string -> (* swagger version *)
+          Semantic.env -> 
+          string (* resource desc *) 
+          * (string * string) list (* resource list *)

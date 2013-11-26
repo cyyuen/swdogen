@@ -26,7 +26,10 @@
 
 type t
 
-val init : Config.t -> t
+(**
+  init output_directory compact 
+ *)
+val init : string -> bool -> t
 
 val deployResource : t -> string -> string -> unit
 

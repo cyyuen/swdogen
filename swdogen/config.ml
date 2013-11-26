@@ -34,7 +34,7 @@ type t = Config_t.t = {
   compact : bool;
   (* project *)
   discoverPaths : string list;
-  excludedPaths : string list;
+  ignores : string list;
 }
 
 exception Configuration_error of string
@@ -54,7 +54,7 @@ let compact config = config.compact
 
 let discoverPaths config = config.discoverPaths
 
-let excludedPaths config = config.excludedPaths
+let ignores config = config.ignores
 
 let init () = 
   try

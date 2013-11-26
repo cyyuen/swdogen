@@ -24,11 +24,11 @@
  *
  *)
 
-let isExcluded excluded path = List.mem path excluded
+let isIgnored ignore path = List.mem path ignore
 
-let rec discoverFile excluded file =
+let rec discoverFile ignore file =
   if Sys.is_directory file then
-    (if isExcluded excluded file then
+    (if isIgnored ignore file then
       []
     else
       let dir = file in
@@ -36,16 +36,14 @@ let rec discoverFile excluded file =
                                     (Filename.concat dir file) :: fl )
                                   []
                                   (Sys.readdir dir) in
-      let filesList = List.map (discoverFile excluded) files in
+      let filesList = List.map (discoverFile ignore) files in
         List.concat filesList
     )
   else
     [file]
 ;;
 
-let discover config =
-  let candidates = (Config.discoverPaths config)
-  and discoverFile = discoverFile (Config.excludedPaths config) in
-  let filesList = List.map discoverFile candidates in
+let discover candidates ignores =
+  let filesList = List.map (discoverFile ignores) candidates in
     List.concat filesList
 ;;

@@ -31,10 +31,9 @@ type t = {
   format : string -> string
 }
 
-let init config =
-  let outdir = (Config.outputDir config) in
+let init outdir format =
   let format = 
-    (if (Config.compact config) then
+    (if format then
       (fun ?std:bool x -> x)
     else 
       Yojson.Safe.prettify) 
