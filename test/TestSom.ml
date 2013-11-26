@@ -104,19 +104,9 @@ let test_som1 txt =
   and () = assert_equal ~msg:"local auth test failed"            None (SS.localAuth operation)
   and () = assert_equal ~msg:"local produces test failed"        [] (SS.localProduces operation)
   and () = assert_equal ~msg:"local consumes test failed"        [] (SS.localConsumes operation)
+  and () = assert_equal ~msg:"parameter test failed"             [resource1_param] (SS.parameters operation)
+  and () = assert_equal ~msg:"responses test failed"             [resource1_response] (SS.responses operation)
   in
-  (* parameters test *)
-  let parameters = SS.parameters operation in
-  let () = assert_equal ~msg:"should only contain 1 parameter" 1 (List.length parameters) in
-  let parameter = List.hd parameters in
-  let () = assert_equal ~msg:"operation parameter test failed" resource1_param parameter
-  in
-  (* response test *)
-  let responses = SS.responses operation in
-  let () = assert_equal ~msg:"should only contain 1 response message" 1 (List.length responses) in
-  let response = List.hd responses in
-  let () = assert_equal ~msg:"operation response test failed" resource1_response response
-  in 
     ()
 
 let tests =
