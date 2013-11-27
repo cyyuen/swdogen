@@ -299,12 +299,16 @@ let analysisOperation path operation =
   and summarySetChecker = setCheker Som.summary_is_set addPropNotSetWarning "@summary"
   and returnTypeSetChecker = setCheker Som.returnType_is_set addPropNotSetWarningWithDefault "@return"
   in
-  let authChecker = 
-    match Som.localAuth operation with
+  let authChecker = (fun () -> Msgpool.empty) 
+  (*  
+    TODO: support authorization
+
+      match Som.localAuth operation with
         | Some (AuthApiKey(_, _, Identifier(_, param))) -> 
             fun () ->
               paramIsRequired pos operation param
         | None -> fun () -> Msgpool.empty
+  *)
   in
     Msgpool.concat 
       (List.map 
