@@ -229,12 +229,14 @@ let addNotes (operation, msgpool) ((pos, notes)) =
   in
   { operation with notes = Some notes }, msgpool'
 
-let addLocalAuth (operation, msgpool) (AuthApiKey (pos, _, _) as auth) = 
-  let msgpool' = (match operation.localAuth with
-                      | None -> msgpool
-                      | Some _ -> addPropOveride pos "@auth/apiKey" msgpool)
-  in
-  { operation with localAuth = Some auth }, msgpool'
+let addLocalAuth (operation, msgpool) = function
+  | (AuthApiKey (pos, _, _) as auth) 
+  | (OAuth2 (pos, _, _) as auth) -> 
+    let msgpool' = (match operation.localAuth with
+                        | None -> msgpool
+                        | Some _ -> addPropOveride pos "@auth" msgpool)
+    in
+    { operation with localAuth = Some auth }, msgpool'
 
 let addOperationProp (operation, msgpool) = (function
   | Method (httpMethod)    -> addHttpMethod (operation, msgpool) httpMethod
@@ -315,8 +317,9 @@ let addResourceProp (resource, msgpool)
   let msgpool' = 
     (match (resource.globalAuth, auth) with
          | (Some _, Some auth) -> 
-          let AuthApiKey (pos, _, _) = auth in
-            addPropOveride pos "@auth/apiKey" msgpool'
+            (match auth with
+                 | AuthApiKey (pos, _, _) | OAuth2 (pos, _, _) ->
+                    addPropOveride pos "@auth" msgpool')
          | _ -> msgpool')
   in
     { resource' with basePath = Some path; globalAuth = auth }, msgpool'

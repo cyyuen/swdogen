@@ -12,12 +12,13 @@ let makeTokenData () =
 %token <int>    T_INT_LITERAL
 %token <float>  T_FLOAT_LITERAL
 %token <string> T_IDENTIFIER
+%token <string> T_SCOPES
 %token <string> T_STRING_LITERAL
 %token <string> T_URL
 %token <string> T_MIME
 
-/* ( ) [ ] , - | ' '' : ? = */
-%token T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_COMMA T_MINUS T_VBAR T_DQUOTE T_QUOTE T_COLON T_QMARK T_ASG
+/* ( ) [ ] , - | ' '' : ? = @ */
+%token T_LPAREN T_RPAREN T_LBRACE T_RBRACE T_COMMA T_MINUS T_VBAR T_DQUOTE T_QUOTE T_COLON T_QMARK T_ASG T_AT
 
 /* predefined type */
 %token T_INT T_LONG T_FLOAT T_DOUBLE
@@ -41,6 +42,7 @@ let makeTokenData () =
 %token T_AT_PARAM
 %token T_AT_MODEL T_AT_PROPERTY
 %token T_AT_PRODUCES T_AT_CONSUMES
+%token T_AT_AUTH_OAUTH2 T_AT_OAUTH_IMPLICIT T_AT_OAUTH_REQUEST T_AT_OAUTH_TOKEN
 
 %start single_swg_source_file              /* the entry point */
 %type <Ast.sourceFile> single_swg_source_file
@@ -61,6 +63,7 @@ mime:
 ;
 identifier:
   T_IDENTIFIER       { Identifier (makeTokenData(), $1) }
+  | T_SCOPES         { Identifier (makeTokenData(), $1) }
 ;
 num_literal:
   | T_INT_LITERAL    { Int   (makeTokenData(), $1) }
@@ -157,8 +160,31 @@ mime_def_list:
   /* empty */                                                    { [] }
   | mime_def mime_def_list                                       { $1 :: $2 }
 ;
+oauth_token_endpoint:
+  T_AT_OAUTH_TOKEN identifier url                                { OAuth2TokenEndPoint (makeTokenData(), $2, $3) }
+;
+oauth_request_endpoint:
+  T_AT_OAUTH_REQUEST identifier T_COLON identifier T_AT url      { OAuth2RequestEndPoint (makeTokenData(), $2, $4, $6) }
+oauth_authcode:
+  oauth_request_endpoint oauth_token_endpoint                    { OAuth2AuthCode ($1, $2) }
+;
+oauth_implicit:
+  T_AT_OAUTH_IMPLICIT identifier url                             { OAuth2Implicit (makeTokenData(), $2, $3) } 
+;
+oauth_type:
+  oauth_implicit                                                 { $1 }
+  | oauth_authcode                                               { $1 } 
+;
+oauth_scope_tail:
+  /* empty */                                                    { [] }
+  | T_COMMA identifier oauth_scope_tail                          { $2 :: $3 }
+;
+oauth_scope:
+  identifier oauth_scope_tail                                    { OAuthScope ($1 :: $2) }
+;
 authorization:
   T_AT_AUTH_APIKEY param_type identifier                         { AuthApiKey (makeTokenData(), $2, $3) }
+  | T_AT_AUTH_OAUTH2 T_SCOPES T_COLON oauth_scope oauth_type     { OAuth2 (makeTokenData(), $4, $5) }
 ; 
 operation_property:
     T_AT_METHOD    http_method                                   { Method      (makeTokenData(), $2) }

@@ -242,12 +242,15 @@ let genParamTyp typ =
 ;;
 
 let genAuthorization = (function
-  | None -> ""
+  | _ -> ""
+  (*
   | Some (AuthApiKey (_, paramType, Identifier(_, id))) ->
     let typ = kstr "type" id
     and passAs = kstr "passAs" (genParamTypLiteral paramType) in 
     let apiKey = kobj "apiKey" (commaJoin [typ; passAs]) in
-      kobj "authorizations" apiKey)
+      kobj "authorizations" apiKey
+  *)
+  )
 
 let genRequired required =
   let r = (match required with

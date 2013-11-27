@@ -95,7 +95,17 @@ type statusCode = StatusCode of (tokenData * int)
 type mimeDef = Produces of (tokenData * mime)
              | Consumes of (tokenData * mime)
 
+type requestEndPoint = OAuth2RequestEndPoint of (tokenData * identifier * identifier * url)
+
+type tokenEndPoint = OAuth2TokenEndPoint of (tokenData * identifier * url)
+
+type oauthType = OAuth2Implicit of (tokenData * identifier * url)
+               | OAuth2AuthCode of (requestEndPoint * tokenEndPoint)
+
+type oauthScope = OAuthScope of identifier list
+
 type authorization = AuthApiKey of (tokenData * paramType * identifier)
+                   | OAuth2 of (tokenData * oauthScope * oauthType) 
 
 type paramDef = (tokenData * varDef * paramType * desc)
 

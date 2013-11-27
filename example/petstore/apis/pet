@@ -47,9 +47,6 @@
           "type": "Pet",
           "produces": [ "application/json" ],
           "consumes": [ "application/json" ],
-          "authorizations": {
-            "apiKey": { "type": "auth", "passAs": "header" }
-          },
           "parameters": [
             {
               "name": "petId",

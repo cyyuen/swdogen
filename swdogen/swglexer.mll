@@ -59,6 +59,13 @@ and swg_entry = parse
   | "@produces"    { T_AT_PRODUCES     } 
   | "@consumes"    { T_AT_CONSUMES     }
   | "@auth/apiKey" { T_AT_AUTH_APIKEY  }
+  | "@oauth2"      { T_AT_AUTH_OAUTH2  }
+  | "@oauth2/implicit"     
+                   { T_AT_OAUTH_IMPLICIT } 
+  | "@oauth2/code-request" 
+                   { T_AT_OAUTH_REQUEST }
+  | "@oauth2/code-token"   
+                   { T_AT_OAUTH_TOKEN  }
   | "*/"           { token lexbuf;     }
   | "\n"           { new_line lexbuf; 
                      swg_entry lexbuf  }
@@ -111,6 +118,9 @@ and swg_body = parse
   | ":"            { T_COLON  }
   | "?"            { T_QMARK  }
   | "="            { T_ASG    }
+  | "@"            { T_AT     }
+
+  | "scopes" as l  { T_SCOPES (l) }       
 
   (* other words *)
   | blanks { swg_body lexbuf }
