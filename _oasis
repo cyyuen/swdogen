@@ -53,7 +53,7 @@ Executable test
   MainIs:               test.ml
   Install:              false
   CompiledObject:       best
-  BuildDepends:         oUnit (>= 2.0.0), swdogen
+  BuildDepends:         oUnit, swdogen
   
 Test test
   Command:              $test -swdogen $swdogen
