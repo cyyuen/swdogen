@@ -1,6 +1,6 @@
 # OASIS_START
-# DO NOT EDIT (digest: 29509c7e749148ccd86421ab48bad9e3)
-version = "0.0.1"
+# DO NOT EDIT (digest: 9fbd154ef16f490a79942e615a6e341a)
+version = "0.1.0"
 description = "_oasis file functions"
 requires = "atdgen unix"
 archive(byte) = "swdogen.cma"
