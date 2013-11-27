@@ -28,3 +28,10 @@ open OUnit2;;
 
 let swdogen = Conf.make_exec "swdogen"
 
+let tests =
+"test_swdogens" >:::
+ ["test_swdogen1" >::
+  (fun txt -> 
+    let _ = swdogen txt in () )]
+;;
+

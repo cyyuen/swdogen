@@ -30,6 +30,7 @@ let suite =
 "suite">:::
  [ TestParser.tests;
    TestSom.tests;
+   TestSwdogen.tests;
  (* TestCodegen.tests;
   
   TestSemantic.tests;
