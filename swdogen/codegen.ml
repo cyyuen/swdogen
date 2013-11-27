@@ -182,6 +182,10 @@ let genConsumesList cl = karr "consumes" (commaJoin (List.map genMime cl))
 
 let genPath (URL (_, url)) = kstr "path" url 
 
+let genDclPath (URL (p, url)) =
+  let url = (if url.[0] = '/' then "/.." ^ url else url) in
+    genPath (URL (p, url))
+
 let genNickname (Identifier(_, name)) = kstr "nickname" name
 
 let genParameters ps = karr "parameters" (commaJoin ps)
@@ -398,7 +402,7 @@ let genResource env apiVersion swgVersion som =
   and produces      = genProducesList (Som.globalProduces som)
   and consumes      = genConsumesList (Som.globalConsumes som)
   and authorization = genAuthorization (Som.globalAuth som)
-  and resrcDclPath  = genPath path 
+  and resrcDclPath  = genDclPath path 
   and resrcDclDesc  = genDesc (Som.resourceDesc som) in
   let (apiList, modelSetList) = List.split (List.map genApi (Som.apis som)) in
   let modelSet = List.fold_left StringSet.union StringSet.empty modelSetList in
