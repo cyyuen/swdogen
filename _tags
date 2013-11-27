@@ -1,5 +1,5 @@
 # OASIS_START
-# DO NOT EDIT (digest: d984019d6f8d8a2c8b90951bac7bbef3)
+# DO NOT EDIT (digest: f1766018c238f87e291a19625e19ab38)
 # Ignore VCS directories, you can use the same kind of rule outside 
 # OASIS_START/STOP if you want to exclude directories that contains 
 # useless stuff for the build process
@@ -37,11 +37,11 @@
 <src/*.ml{,i}>: pkg_unix
 # Executable test
 <test/test.{native,byte}>: use_swdogen
-<test/test.{native,byte}>: pkg_ounit
+<test/test.{native,byte}>: pkg_oUnit
 <test/test.{native,byte}>: pkg_atdgen
 <test/test.{native,byte}>: pkg_unix
 <test/*.ml{,i}>: use_swdogen
-<test/*.ml{,i}>: pkg_ounit
+<test/*.ml{,i}>: pkg_oUnit
 <test/*.ml{,i}>: pkg_atdgen
 <test/*.ml{,i}>: pkg_unix
 # OASIS_STOP
