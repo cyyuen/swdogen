@@ -52,9 +52,26 @@ to remove the swdogen
 2. Document your project with [swdogen notation](https://github.com/dotcy/swdogen/wiki/Notation), a javadoc like notation.
 3. run ```swdogen``` in the top-level of your project
 
-## <font color="orange"> Waring </font>
+## Live Demo 
 
-**swdogen is under heavy development. please use in your own risk**
+There are some sample programs in the example folder. Pick the one you like and move to its top-level directory which contains a _swdogen. (eg. example/petstore)
+
+```
+$ cd example/petstore
+$ ls
+_swdogen  models  resources
+``` 
+
+and run
+
+```
+$ swdogen
+$ ls
+_swdogen  apis  models  resources
+```
+
+the generated swagger-ui doc would be lie in the apis folder.
+
 
 ## Contact
 
