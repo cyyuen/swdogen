@@ -72,6 +72,9 @@ _swdogen  apis  models  resources
 
 the generated swagger-ui doc would be lie in the apis folder.
 
+## Templates
+
+There are some [Templates](https://github.com/dotcy/swdogen/wiki/Template) to make your API swagger even more easier.
 
 ## Contact
 
