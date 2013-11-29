@@ -20,31 +20,52 @@ Any languages that supports c-style bloack comment, ie.
 */
 ```
 
-## Required Components
+## How to get it
 
-* [atdgen](https://github.com/mjambon/atdgen)
+### Install from OPAM
 
-## Installation
+Swdogen is implemented in OCaml and managed by [OPAM](http://opam.ocaml.org/pkg/swdogen/0.1.0/).
 
-Under the top-level of swdogen, run
+1. Install OPAM. See [instructions](http://opam.ocaml.org/doc/Quick_Install.html).
+2. Install Swdogen: `opam install swdogen`
 
-```
-ocaml setup.ml -all
-```
+### Build from source
 
-to install and run
+Download source code of Swdogen from [releases](https://github.com/dotcy/swdogen/releases) or clone with git.
 
-```
-ocaml setup.ml -distclean
-```
+To build using the following commands
 
-to clean the build and configure file. run
-
-```
-ocaml setup.ml -uninstall
+```text
+$ ocaml setup.ml -configure
+$ ocaml setup.ml -build
 ```
 
-to remove the swdogen
+To install using the following commands
+
+```text
+$ ocaml setup.ml -install
+```
+
+For optional test, reconfigure with test enable
+
+```text
+$ ocaml setup.ml -configure --enable-tests
+$ ocaml setup.ml -build
+$ ocaml setup.ml -test
+```
+
+To uninstall using the following commands
+
+```shell
+$ ocaml setup.ml -uninstall
+```
+
+#### Dependencies
+
+If there is any missing dependency, you may install them by opam or by hand 
+
+- [ounit](https://github.com/mlin/ounit): a unit test framework for OCaml
+- [atdgen](https://github.com/mjambon/atdgen): a tool that derives OCaml boilerplate code from type definitions
 
 ## Usage (Just 3 steps to go)
 
