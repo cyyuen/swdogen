@@ -1,6 +1,6 @@
 # SWDOGEN
 
-[![Build Status](https://api.travis-ci.org/dotcy/swdogen.png)](https://travis-ci.org/dotcy/swdogen)
+[![Build Status](https://api.travis-ci.org/cyyuen/swdogen.png)](https://travis-ci.org/cyyuen/swdogen)
 
 
 This is a documentation generator for [swagger-ui](https://github.com/wordnik/swagger-ui). It will scan your project source code, extract the comment with special beginning, parse the swagger code within the comment and generate the swagger documentation.
