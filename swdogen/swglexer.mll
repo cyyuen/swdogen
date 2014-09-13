@@ -25,7 +25,7 @@ let minescheme =
   ( "application/" 
   | "audio/" 
   | "image/" 
-  | "message" 
+  | "message/" 
   | "model/" 
   | "multiplepart/" 
   | "text/" 
