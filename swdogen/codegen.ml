@@ -135,10 +135,7 @@ let genCompoundType = function
 
 let genModelType is_return modelType =
   let modelId = swgtype_toString (ModelType(modelType)) in
-    if is_return then
-      (kstr "type" modelId, Some modelId)
-    else
-      (kstr "$ref" modelId, Some modelId)
+    (kstr "type" modelId, Some modelId)
 ;;
 
 let rec genArrayType arrTyp =
