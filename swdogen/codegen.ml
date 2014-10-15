@@ -208,6 +208,7 @@ let genHttpMethod httpMethod =
     | POST  (_) -> "POST"
     | PUT   (_) -> "PUT"
     | DELETE(_) -> "DELETE"
+    | PATCH (_) -> "PATCH"
     | HEAD  (_) -> "HEAD"
   in
     kstr "method" m
