@@ -31,7 +31,7 @@ let makeTokenData () =
 %token T_PARAM_PATH T_PARAM_BODY T_PARAM_QUERY T_PARAM_HEADER T_PARAM_FORM
 
 /* http method */
-%token T_METHOD_GET T_METHOD_POST T_METHOD_PUT T_METHOD_DELETE T_METHOD_HEAD
+%token T_METHOD_GET T_METHOD_POST T_METHOD_PUT T_METHOD_DELETE T_METHOD_PATCH T_METHOD_HEAD
 
 /* swg doc definition */
 /* TODO: namespace
@@ -147,6 +147,7 @@ http_method:
   | T_METHOD_POST                                                { POST   (makeTokenData()) }
   | T_METHOD_PUT                                                 { PUT    (makeTokenData()) }
   | T_METHOD_DELETE                                              { DELETE (makeTokenData()) }
+  | T_METHOD_PATCH                                               { PATCH  (makeTokenData()) }
   | T_METHOD_HEAD                                                { HEAD   (makeTokenData()) }
 ;
 staus_code:

@@ -88,6 +88,7 @@ and swg_body = parse
   | "POST"         { T_METHOD_POST   }
   | "PUT"          { T_METHOD_PUT    }
   | "DELETE"       { T_METHOD_DELETE }
+  | "PATCH"        { T_METHOD_PATCH  }
   | "HEAD"         { T_METHOD_HEAD   }
 
   (* predefined type *)

@@ -88,6 +88,7 @@ type httpMethod = GET    of tokenData
                 | POST   of tokenData 
                 | PUT    of tokenData 
                 | DELETE of tokenData     
+                | PATCH  of tokenData
                 | HEAD   of tokenData 
 
 type statusCode = StatusCode of (tokenData * int)
